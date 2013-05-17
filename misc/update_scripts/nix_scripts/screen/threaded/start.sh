@@ -1,10 +1,10 @@
 #!/bin/sh
 
-export NZEDB_PATH="/var/www/nzedb/misc/update_scripts"
-export HELP_PATH="/var/www/nzedb/misc/update_scripts/nix_scripts/screen/threaded"
-export THREAD_PATH="/var/www/nzedb/misc/update_scripts/threaded_scripts"
-export TEST_PATH="/var/www/nzedb/misc/testing/Release_scripts"
-export PHP="$(which php5)"
+export NZEDB_PATH="/var/www/nZEDb/misc/update_scripts"
+export HELP_PATH="/var/www/nZEDb/misc/update_scripts/nix_scripts/screen/threaded"
+export THREAD_PATH="/var/www/nZEDb/misc/update_scripts/threaded_scripts"
+export TEST_PATH="/var/www/nZEDb/misc/testing/Release_scripts"
+command -v php5 >/dev/null 2>&1 && export PHP=`command -v php5` || { export PHP=`command -v php`; }
 export PYTHON="$(which python)"
 export SCREEN="$(which screen)"
 export NZEDB_SLEEP_TIME="60"
