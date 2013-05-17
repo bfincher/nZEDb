@@ -1,7 +1,7 @@
 #!/bin/sh
 
-export NZEDB_PATH="/var/www/nZEDb/misc/update_scripts"
-export TEST_PATH="/var/www/nZEDb/misc/testing/Release_scripts"
+export NZEDB_PATH="/var/www/nzedb/misc/update_scripts"
+export TEST_PATH="/var/www/nzedb/misc/testing/Release_scripts"
 export PHP="$(which php5)"
 export NZEDB_SLEEP_TIME="60"
 
