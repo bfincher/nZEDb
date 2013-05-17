@@ -7,9 +7,9 @@ require_once(FS_ROOT."/../../www/lib/category.php");
 
 $releases = new Releases();
 $db = new Db;
-#$sql = "select ID from releases where categoryID = '".CATEGORY::CAT_MISC_OTHER."' AND adddate <= CURRENT_DATE - INTERVAL 4 HOUR";
-#$rel = $db->query($sql);
-#echo "Deleting ".count($rel)." Release(s) from Others > Misc\n";
+$sql = "select ID from releases where categoryID = '".CATEGORY::CAT_MISC."' AND adddate <= CURRENT_DATE - INTERVAL 4 HOUR";
+$rel = $db->query($sql);
+echo "Deleting ".count($rel)." Release(s) from Others > Misc\n";
 #foreach ($rel as $r) { $releases->delete($r['ID']); }
 
 ##$cats=array('".CATEGORY::CAT_TV_FOREIGN."', ".CATEGORY::CAT_XXX_DVD.", ".CATEGORY::CAT_XXX_WMV.", ".CATEGORY::CAT_XXX_XVID.", ".CATEGORY::CAT_XXX_X264.", ".CATEGORY::CAT_XXX_PACK.", ".CATEGORY::CAT_XXX_IMAGESET.", ".CATEGORY::CAT_XXX_OTHER.", ".CATEGORY::CAT_MOVIE_FOREIGN.");
