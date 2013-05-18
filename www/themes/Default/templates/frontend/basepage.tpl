@@ -4,20 +4,19 @@
 	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
 	<meta name="keywords" content="{$page->meta_keywords}{if $site->metakeywords != ""},{$site->metakeywords}{/if}" />
 	<meta name="description" content="{$page->meta_description}{if $site->metadescription != ""} - {$site->metadescription}{/if}" />	
-	<meta name="newznab_version" content="{$site->version}" />
+	<meta name="nZEDb_version" content="{$site->version}" />
 	<title>{$page->meta_title}{if $site->metatitle != ""} - {$site->metatitle}{/if}</title>
 {if $loggedin=="true"}	<link rel="alternate" type="application/rss+xml" title="{$site->title} Full Rss Feed" href="{$smarty.const.WWW_TOP}/rss?t=0&amp;dl=1&amp;i={$userdata.ID}&amp;r={$userdata.rsstoken}" />{/if}
 
-	<link href="{$smarty.const.WWW_TOP}/templates/Default/styles/style.css" rel="stylesheet" type="text/css" media="screen" />
-	<link href="{$smarty.const.WWW_TOP}/templates/Default/styles/jquery.qtip.css" rel="stylesheet" type="text/css" media="screen" />
+	<link href="{$smarty.const.WWW_TOP}/themes/Default/styles/style.css" rel="stylesheet" type="text/css" media="screen" />
+	<link href="{$smarty.const.WWW_TOP}/themes/Default/styles/jquery.qtip.css" rel="stylesheet" type="text/css" media="screen" />
 {if $site->google_adsense_acc != ''}	<link href="http://www.google.com/cse/api/branding.css" rel="stylesheet" type="text/css" media="screen" />
 {/if}
-{if $site->style != "" && $site->style != "/"}	<link href="{$smarty.const.WWW_TOP}/templates/Default/themes/{$site->style}/style.css" rel="stylesheet" type="text/css" media="screen" />
-{/if}
-	<link rel="shortcut icon" type="image/ico" href="{$smarty.const.WWW_TOP}/templates/Default/images/favicon.ico"/>
-	<script type="text/javascript" src="{$smarty.const.WWW_TOP}/templates/Default/scripts/jquery.js"></script>
-	<script type="text/javascript" src="{$smarty.const.WWW_TOP}/templates/Default/scripts/utils.js"></script>
-	<script type="text/javascript" src="{$smarty.const.WWW_TOP}/templates/Default/scripts/sorttable.js"></script>
+
+	<link rel="shortcut icon" type="image/ico" href="{$smarty.const.WWW_TOP}/themes/Default/images/favicon.ico"/>
+	<script type="text/javascript" src="{$smarty.const.WWW_TOP}/themes/Default/scripts/jquery.js"></script>
+	<script type="text/javascript" src="{$smarty.const.WWW_TOP}/themes/Default/scripts/utils.js"></script>
+	<script type="text/javascript" src="{$smarty.const.WWW_TOP}/themes/Default/scripts/sorttable.js"></script>
 
 	<script type="text/javascript">
 	/* <![CDATA[ */	
@@ -42,7 +41,7 @@
 	{/strip}
 
 	<div id="logo">
-		<a class="logolink" title="{$site->title} Logo" href="{$smarty.const.WWW_TOP}{$site->home_link}"><img class="logoimg" alt="{$site->title} Logo" src="{$smarty.const.WWW_TOP}/templates/Default/images/clearlogo.png" /></a>
+		<a class="logolink" title="{$site->title} Logo" href="{$smarty.const.WWW_TOP}{$site->home_link}"><img class="logoimg" alt="{$site->title} Logo" src="{$smarty.const.WWW_TOP}/themes/Default/images/clearlogo.png" /></a>
 
 		<ul>{$main_menu}</ul>
 

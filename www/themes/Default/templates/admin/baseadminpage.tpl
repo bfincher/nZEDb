@@ -5,16 +5,14 @@
 	<meta name="keywords" content="" />
 	<meta name="description" content="" />	
 	<title>{$site->title|default:'nZEDb'} - {$page->meta_title|default:$page->title}</title>
-	<link href="{$smarty.const.WWW_TOP}/../templates/Default/styles/style.css" rel="stylesheet" type="text/css" media="screen" />
-	<link href="{$smarty.const.WWW_TOP}/../templates/Default/styles/admin.css" rel="stylesheet" type="text/css" media="screen" />
-	{if $site->style != "" && $site->style != "/"}<link href="{$smarty.const.WWW_TOP}/../templates/Default/themes/{$site->style}/style.css" rel="stylesheet" type="text/css" media="screen" />
-<link href="{$smarty.const.WWW_TOP}/../templates/Default/themes/{$site->style}/admin.css" rel="stylesheet" type="text/css" media="screen" />	
-	{/if}
-	<link rel="shortcut icon" type="image/ico" href="{$smarty.const.WWW_TOP}/../templates/Default/images/favicon.ico"/>
-	<script type="text/javascript" src="{$smarty.const.WWW_TOP}/../templates/Default/scripts/jquery.js"></script>
-	<script type="text/javascript" src="{$smarty.const.WWW_TOP}/../templates/Default/scripts/sorttable.js"></script>
-	<script type="text/javascript" src="{$smarty.const.WWW_TOP}/../templates/Default/scripts/utils-admin.js"></script>
-	<script type="text/javascript" src="{$smarty.const.WWW_TOP}/../templates/Default/scripts/jquery.multifile.js"></script>
+	<link href="{$smarty.const.WWW_TOP}/../themes/Default/styles/style.css" rel="stylesheet" type="text/css" media="screen" />
+	<link href="{$smarty.const.WWW_TOP}/../themes/Default/styles/admin.css" rel="stylesheet" type="text/css" media="screen" />
+
+	<link rel="shortcut icon" type="image/ico" href="{$smarty.const.WWW_TOP}/../themes/Default/images/favicon.ico"/>
+	<script type="text/javascript" src="{$smarty.const.WWW_TOP}/../themes/Default/scripts/jquery.js"></script>
+	<script type="text/javascript" src="{$smarty.const.WWW_TOP}/../themes/Default/scripts/sorttable.js"></script>
+	<script type="text/javascript" src="{$smarty.const.WWW_TOP}/../themes/Default/scripts/utils-admin.js"></script>
+	<script type="text/javascript" src="{$smarty.const.WWW_TOP}/../themes/Default/scripts/jquery.multifile.js"></script>
 	<script type="text/javascript">var WWW_TOP = "{$smarty.const.WWW_TOP}/..";</script>
 	
 	{$page->head}
