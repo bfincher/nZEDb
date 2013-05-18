@@ -78,5 +78,8 @@ php fixReleaseNames.php 1 true all yes >> $LOG_DIR/update.log
 php removeCrapReleases.php true 6 >> $LOG_DIR/update.log
 php delete_disabled_category_releases.php true >> $LOG_DIR/update.log
 
+cd ${TESTING_PATH}
+php clean_by_cat.php
+
 rm $PIDFILE
 
