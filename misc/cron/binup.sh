@@ -45,7 +45,7 @@ export NEWZNAB_PATH="/var/www/nzedb/misc/update_scripts"
 export ADMIN_PATH="/var/www/nzedb/www/admin"
 export TESTING_PATH="/var/www/nzedb/misc/testing"
 export NEWZNAB_BINUP="update_binaries.php"
-export NEWZNAB_RELUP="update_releases.php 1 true"
+export NEWZNAB_RELUP="update_releases.php 1 false"
 export NEWZNAB_UPDATE_CLEANUP="update_cleanup.php"
 export NEWZNAB_IMPORT="nzb-importmodified.php /home/bfincher/nzbimport false"
 export UPDATE_PARSING="update_parsing.php"
@@ -78,8 +78,11 @@ php fixReleaseNames.php 1 true all yes >> $LOG_DIR/update.log
 php removeCrapReleases.php true 6 >> $LOG_DIR/update.log
 php delete_disabled_category_releases.php true >> $LOG_DIR/update.log
 
+cd ${NEWZNAB_PATH}/threaded_scripts
+python postprocess_threaded.py >> $LOG_DIR/update.log
+
 cd ${TESTING_PATH}
-php clean_by_cat.php
+php clean_by_cat.php >> $LOG_DIR/update.log
 
 rm $PIDFILE
 
