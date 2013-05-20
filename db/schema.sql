@@ -418,6 +418,7 @@ CREATE TABLE `groups` (
   `minfilestoformrelease` INT(4) NULL,
   `minsizetoformrelease` BIGINT NULL,
   `active` TINYINT(1) NOT NULL DEFAULT '0',
+  `backfill` TINYINT(1) NOT NULL DEFAULT '0',
   `description` VARCHAR(255) NULL DEFAULT '',
   PRIMARY KEY  (`ID`),
   KEY `active` (`active`)
@@ -669,6 +670,7 @@ INSERT INTO category (ID, title, parentID) VALUES (3020, 'Video', 3000);
 INSERT INTO category (ID, title, parentID) VALUES (3030, 'Audiobook', 3000);
 INSERT INTO category (ID, title, parentID) VALUES (3040, 'Lossless', 3000);
 INSERT INTO category (ID, title, parentID) VALUES (3050, 'Other', 3000);
+INSERT INTO category (ID, title, parentID) VALUES (3060, 'Foreign', 3000);
 
 INSERT INTO category (ID, title, parentID) VALUES (4010, '0day', 4000);
 INSERT INTO category (ID, title, parentID) VALUES (4020, 'ISO', 4000);
@@ -702,6 +704,7 @@ INSERT INTO category (ID, title, parentID) VALUES (8020, 'Comics', 8000);
 INSERT INTO category (ID, title, parentID) VALUES (8030, 'Magazines', 8000);
 INSERT INTO category (ID, title, parentID) VALUES (8040, 'Technical', 8000);
 INSERT INTO category (ID, title, parentID) VALUES (8050, 'Other', 8000);
+INSERT INTO category (ID, title, parentID) VALUES (8060, 'Foreign', 8000);
 
 
 DROP TABLE IF EXISTS `users`;
@@ -967,7 +970,8 @@ INSERT INTO `site`
 	('amazonsleep', 1000),
 	('passchkattempts', 1),
 	('catwebdl', 0),
-	('sqlpatch', '39');
+	('safebackfilldate', '2012-06-24'),
+	('sqlpatch', '42');
 
 
 DROP TABLE IF EXISTS `consoleinfo`;
