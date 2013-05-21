@@ -1770,7 +1770,7 @@ class Releases
 
 		$db->queryDirect("DELETE collections, binaries, parts
 						  FROM collections LEFT JOIN binaries ON collections.ID = binaries.collectionID LEFT JOIN parts on binaries.ID = parts.binaryID
-						  WHERE (collections.filecheck = 5 OR (collections.dateadded < (now() - interval 72 hour))) " . $where);
+						  WHERE (collections.filecheck = 5 OR (collections.dateadded < (now() - interval 24 hour))) " . $where);
 		$reccount = $db->getAffectedRows();
 
 		$where = (!empty($groupID)) ? " AND groupID = " . $groupID : "";
