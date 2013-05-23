@@ -307,7 +307,7 @@ class PostProcess
 						}
 					}
 					// Look for a JPG picture.
-					elseif ($processJPGSample && preg_match('/\.(jpg|jpeg)[\. "\)\]]/i', $nzbcontents['subject']) && !preg_match('/FLAC|MP3|WEB/i', $nzbcontents['subject']))
+					elseif (!preg_match('/flac|lossless|mp3|music|sound/i', $groupName) && $processJPGSample && preg_match('/\.(jpg|jpeg)[\. "\)\]]/i', $nzbcontents['subject']))
 					{
 						if (isset($nzbcontents['segment']) && empty($jpgmsgid))
 						{
@@ -504,9 +504,7 @@ class PostProcess
 						if (is_dir($tmpPath))
 						{
 							$ri = new ReleaseImage;
-							if (@imagecreatefromjpeg($tmpPath."samplepicture.jpg") !== false)
-								$blnTookJPG = $ri->saveImage($rel["guid"].'_thumb', $tmpPath."samplepicture.jpg", $ri->jpgSavePath, 650, 650);
-							
+							$blnTookJPG = $ri->saveImage($rel["guid"].'_thumb', $tmpPath."samplepicture.jpg", $ri->jpgSavePath, 650, 650);
 							if ($blnTookJPG !== false)
 								$db->query(sprintf("UPDATE releases SET jpgstatus = %d WHERE ID = %d", 1, $rel['ID']));
 
