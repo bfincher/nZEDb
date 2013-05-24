@@ -61,7 +61,7 @@ modulo=$(( $count%10 ))
 if [ $modulo == 0 ]; then
    pushd ${NEWZNAB_PATH}
    echo "optimizing db"
-   php cmd-line-optimize.php
+   php optimise_db.php >> $LOG_DIR/update.log
    popd
 fi
 (( count++ ))
@@ -79,7 +79,7 @@ php removeCrapReleases.php true 6 >> $LOG_DIR/update.log
 php delete_disabled_category_releases.php true >> $LOG_DIR/update.log
 
 cd ${NEWZNAB_PATH}/threaded_scripts
-python postprocess_threaded.py >> $LOG_DIR/update.log
+python postprocess_threaded.py all >> $LOG_DIR/update.log
 
 cd ${TESTING_PATH}
 php clean_by_cat.php >> $LOG_DIR/update.log
