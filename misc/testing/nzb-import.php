@@ -206,6 +206,7 @@ else
 				if ($isBlackListed)
 				{
 					$errorMessage = $n."\033[38;5;".$color_blacklist."mSubject is blacklisted: ".$cleanerName."\033[0m".$n;
+				        @unlink($nzbFile);
 				}
 				else
 				{
