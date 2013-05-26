@@ -25,6 +25,8 @@ class Movie
 		$this->apikey = $site->tmdbkey;
 		$this->movieqty = (!empty($site->maximdbprocessed)) ? $site->maximdbprocessed : 100;
 		$this->service = "";
+		$this->imdburl = ($site->imdburl == "0") ? false : true;
+		$this->imdblanguage = (!empty($site->imdblanguage)) ? $site->imdblanguage : "en";
 		
 		$this->imgSavePath = WWW_DIR.'covers/movies/';
 	}
@@ -377,7 +379,7 @@ class Movie
 	
 	public function fetchTmdbProperties($imdbId, $text=false)
 	{
-		$tmdb = new TMDb($this->apikey, 'en'/*language, make it configurable in the future*/);
+		$tmdb = new TMDb($this->apikey, $this->imdblanguage);
 		if ($text == false)
 			$lookupId = 'tt'.$imdbId;
 		else
@@ -434,7 +436,10 @@ class Movie
 			'type' => '/<meta property=\'og\:type\' content=\"(.+)\" \/>/i'
 		);
 
-		$buffer = getUrl("http://www.imdb.com/title/tt$imdbId/");
+		if ($this->imdburl === false)
+			$buffer = getUrl("http://www.imdb.com/title/tt$imdbId/", $this->imdblanguage);
+		else
+			$buffer = getUrl("http://akas.imdb.com/title/tt$imdbId/");
 
 		// make sure we got some data
 		if ($buffer !== false && strlen($buffer))
@@ -564,7 +569,7 @@ class Movie
 											if ($imdbId === false)
 											{
 												//no imdb id found, set to all zeros so we dont process again
-												$db->query(sprintf("UPDATE releases SET imdbID = %d WHERE ID = %d", 0, $arr["ID"]));
+												$db->query(sprintf("UPDATE releases SET imdbID = 0000000 WHERE ID = %d", $arr["ID"]));
 											}
 										}
 									}
@@ -580,27 +585,37 @@ class Movie
 					else if ($binglimit <= 40)
 					{
 						$moviename = str_replace(' ', '+', $moviename);
-						if (preg_match('/(?P<name>[\w+].+)(\+(?P<year>\(\d{4}\)))/i', $moviename, $result))
+						if (preg_match('/(?P<name>[\w+].+)(\+(?P<year>\(\d{4}\)))?/i', $moviename, $result))
 						{
-							$buffer = getUrl("http://www.bing.com/search?q=".$result["name"].urlencode($result["year"])."+".urlencode("site:imdb.com")."&qs=n&form=QBRE&pq=".$result["name"].urlencode($result["year"])."+".urlencode("site:imdb.com")."&sc=4-38&sp=-1&sk=");
-						
-							if ($buffer !== false && strlen($buffer))
+							if (isset($result["year"]) && !empty($result["year"]))
 							{
-								$binglimit++;
-								$imdbId = $this->domovieupdate($buffer, 'Bing1',  $arr["ID"], $db);
-								if ($imdbId === false)
+								$buffer = getUrl("http://www.bing.com/search?q=".$result["name"].urlencode($result["year"])."+".urlencode("site:imdb.com")."&qs=n&form=QBRE&pq=".$result["name"].urlencode($result["year"])."+".urlencode("site:imdb.com")."&sc=4-38&sp=-1&sk=");
+								if ($buffer !== false && strlen($buffer))
 								{
-									$buffer = getUrl("http://www.bing.com/search?q=".$result["name"]."+".urlencode("site:imdb.com")."&qs=n&form=QBRE&pq=".$result["name"]."+".urlencode("site:imdb.com")."&sc=4-38&sp=-1&sk=");
-									if ($buffer !== false && strlen($buffer))
+									$binglimit++;
+									$imdbId = $this->domovieupdate($buffer, 'Bing1',  $arr["ID"], $db);
+									if ($imdbId === false)
 									{
-										$binglimit++;
-										$imdbId = $this->domovieupdate($buffer, 'Bing2',  $arr["ID"], $db);
-										if ($imdbId === false)
+										$buffer = getUrl("http://www.bing.com/search?q=".$result["name"]."+".urlencode("site:imdb.com")."&qs=n&form=QBRE&pq=".$result["name"]."+".urlencode("site:imdb.com")."&sc=4-38&sp=-1&sk=");
+										if ($buffer !== false && strlen($buffer))
 										{
-											//no imdb id found, set to all zeros so we dont process again
-											$db->query(sprintf("UPDATE releases SET imdbID = %d WHERE ID = %d", 0, $arr["ID"]));
+											$binglimit++;
+											$imdbId = $this->domovieupdate($buffer, 'Bing2',  $arr["ID"], $db);
+											if ($imdbId === false)
+												$db->query(sprintf("UPDATE releases SET imdbID = 0000000 WHERE ID = %d", $arr["ID"]));
 										}
 									}
+								}
+							}
+							else
+							{
+								$buffer = getUrl("http://www.bing.com/search?q=".$result["name"]."+".urlencode("site:imdb.com")."&qs=n&form=QBRE&pq=".$result["name"]."+".urlencode("site:imdb.com")."&sc=4-38&sp=-1&sk=");
+								if ($buffer !== false && strlen($buffer))
+								{
+									$binglimit++;
+									$imdbId = $this->domovieupdate($buffer, 'Bing2',  $arr["ID"], $db);
+									if ($imdbId === false)
+										$db->query(sprintf("UPDATE releases SET imdbID = 0000000 WHERE ID = %d", $arr["ID"]));
 								}
 							}
 						}
@@ -608,27 +623,37 @@ class Movie
 					else if ($yahoolimit <= 40)
 					{
 						$moviename = str_replace(' ', '+', $moviename);
-						if(preg_match('/(?P<name>[\w+].+)(\+(?P<year>\(\d{4}\)))/i', $moviename, $result))
+						if(preg_match('/(?P<name>[\w+].+)(\+(?P<year>\(\d{4}\)))?/i', $moviename, $result))
 						{
-							$buffer = getUrl("http://search.yahoo.com/search?n=15&ei=UTF-8&va_vt=any&vo_vt=any&ve_vt=any&vp_vt=any&vf=all&vm=p&fl=0&fr=yfp-t-900&p=".$result["name"]."+".urlencode($result["year"])."&vs=imdb.com");
-						
-							if ($buffer !== false && strlen($buffer))
+							if (isset($result["year"]) && !empty($result["year"]))
 							{
-								$yahoolimit++;
-								$imdbId = $this->domovieupdate($buffer, 'Yahoo1',  $arr["ID"], $db);
-								if ($imdbId === false)
+								$buffer = getUrl("http://search.yahoo.com/search?n=15&ei=UTF-8&va_vt=any&vo_vt=any&ve_vt=any&vp_vt=any&vf=all&vm=p&fl=0&fr=yfp-t-900&p=".$result["name"]."+".urlencode($result["year"])."&vs=imdb.com");
+								if ($buffer !== false && strlen($buffer))
 								{
-									$buffer = getUrl("http://search.yahoo.com/search?n=15&ei=UTF-8&va_vt=any&vo_vt=any&ve_vt=any&vp_vt=any&vf=all&vm=p&fl=0&fr=yfp-t-900&p=".$result["name"]."&vs=imdb.com");
-									if ($buffer !== false && strlen($buffer))
+									$yahoolimit++;
+									$imdbId = $this->domovieupdate($buffer, 'Yahoo1',  $arr["ID"], $db);
+									if ($imdbId === false)
 									{
-										$yahoolimit++;
-										$imdbId = $this->domovieupdate($buffer, 'Yahoo2',  $arr["ID"], $db);
-										if ($imdbId === false)
+										$buffer = getUrl("http://search.yahoo.com/search?n=15&ei=UTF-8&va_vt=any&vo_vt=any&ve_vt=any&vp_vt=any&vf=all&vm=p&fl=0&fr=yfp-t-900&p=".$result["name"]."&vs=imdb.com");
+										if ($buffer !== false && strlen($buffer))
 										{
-											//no imdb id found, set to all zeros so we dont process again
-											$db->query(sprintf("UPDATE releases SET imdbID = %d WHERE ID = %d", 0, $arr["ID"]));
+											$yahoolimit++;
+											$imdbId = $this->domovieupdate($buffer, 'Yahoo2',  $arr["ID"], $db);
+											if ($imdbId === false)
+												$db->query(sprintf("UPDATE releases SET imdbID = 0000000 WHERE ID = %d", $arr["ID"]));
 										}
 									}
+								}
+							}
+							else
+							{
+								$buffer = getUrl("http://search.yahoo.com/search?n=15&ei=UTF-8&va_vt=any&vo_vt=any&ve_vt=any&vp_vt=any&vf=all&vm=p&fl=0&fr=yfp-t-900&p=".$result["name"]."&vs=imdb.com");
+								if ($buffer !== false && strlen($buffer))
+								{
+									$yahoolimit++;
+									$imdbId = $this->domovieupdate($buffer, 'Yahoo2',  $arr["ID"], $db);
+									if ($imdbId === false)
+										$db->query(sprintf("UPDATE releases SET imdbID = 0000000 WHERE ID = %d", $arr["ID"]));
 								}
 							}
 						}
@@ -640,10 +665,7 @@ class Movie
 					}
 				}
 				else
-				{
-					//no valid movie name found, set to all zeros so we dont process again
-					$db->query(sprintf("UPDATE releases SET imdbID = %d WHERE ID = %d", 0, $arr["ID"]));
-				}				
+					$db->query(sprintf("UPDATE releases SET imdbID = 0000000 WHERE ID = %d", $arr["ID"]));			
 			}
 		}
 	}
