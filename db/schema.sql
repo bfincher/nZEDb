@@ -174,6 +174,38 @@ CREATE INDEX ix_releasecomment_releaseID ON releasecomment (`releaseID`);
 CREATE INDEX ix_releasecomment_userID ON releasecomment (`userID`);
 
 
+DROP TABLE IF EXISTS `srrdb`;
+CREATE TABLE `srrdb` 
+(
+`ID` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+`title` VARCHAR(255) NOT NULL DEFAULT '',
+`pubDate` DATETIME DEFAULT NULL,
+`adddate` DATETIME DEFAULT NULL,
+PRIMARY KEY  (`ID`)
+) ENGINE=MYISAM DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci AUTO_INCREMENT=1 ;
+
+INSERT IGNORE INTO `srrdb` (`title`, `pubDate`, `adddate`) VALUES ('FIRST_CHECK_DO_NOT_DELETE_THIS', '2013-05-26 10:07:25', '2013-05-26 10:07:25');
+
+CREATE INDEX ix_srrdb_title ON srrdb(`title`);
+CREATE INDEX ix_srrdb_pubDate ON srrdb(`pubDate`);
+CREATE INDEX ix_srrdb_adddate ON srrdb(`adddate`);
+
+
+DROP TABLE IF EXISTS `predbme`;
+CREATE TABLE `predbme` 
+(
+`ID` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+`title` VARCHAR(255) NOT NULL DEFAULT '',
+`adddate` DATETIME DEFAULT NULL,
+PRIMARY KEY  (`ID`)
+) ENGINE=MYISAM DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci AUTO_INCREMENT=1 ;
+
+INSERT IGNORE INTO `predbme` (`title`, `adddate`) VALUES ('FIRST_CHECK_DO_NOT_DELETE_THIS', '2013-05-26 10:07:25');
+
+CREATE INDEX ix_predbme_title ON predbme(`title`);
+CREATE INDEX ix_predbme_adddate ON predbme(`adddate`);
+
+
 DROP TABLE IF EXISTS `menu`;
 CREATE TABLE `menu` 
 (
@@ -638,7 +670,8 @@ CREATE TABLE category
 `parentID` INT NULL,
 `status` INT NOT NULL DEFAULT '1',
 `description` varchar(255) null,
-`disablepreview` tinyint(1) NOT NULL default '0'
+`disablepreview` tinyint(1) NOT NULL default '0',
+`minsize` BIGINT UNSIGNED NOT NULL DEFAULT '0'
 ) ENGINE=MYISAM DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci AUTO_INCREMENT=100000 ;
 
 INSERT INTO category (ID, title) VALUES (1000, 'Console');
@@ -981,8 +1014,8 @@ INSERT INTO `site`
 	('debuginfo', 0),
 	('processvideos', 0),
 	('imdburl', 0),
-	('imdblanguage', 'en')
-	('sqlpatch', '53');
+	('imdblanguage', 'en'),
+	('sqlpatch', '56');
 
 
 DROP TABLE IF EXISTS `consoleinfo`;
