@@ -10,7 +10,7 @@ require_once(WWW_DIR."/lib/music.php");
 require_once(WWW_DIR."/lib/nfo.php");
 require_once(WWW_DIR."/lib/nntp.php");
 require_once(WWW_DIR."/lib/nzbcontents.php");
-require_once(WWW_DIR."/lib/predbme.php");
+require_once(WWW_DIR."/lib/predb.php");
 require_once(WWW_DIR."/lib/rarinfo.php");
 require_once(WWW_DIR."/lib/releases.php");
 require_once(WWW_DIR."/lib/releaseextra.php");
@@ -18,7 +18,6 @@ require_once(WWW_DIR."/lib/releasefiles.php");
 require_once(WWW_DIR."/lib/releaseimage.php");
 require_once(WWW_DIR."/lib/rrarinfo.php");
 require_once(WWW_DIR."/lib/site.php");
-require_once(WWW_DIR."/lib/srrdb.php");
 require_once(WWW_DIR."/lib/tvrage.php");
 require_once(WWW_DIR."/lib/util.php");
 require_once(WWW_DIR."/lib/zipinfo.php");
@@ -35,7 +34,7 @@ class PostProcess
 		$this->passchkattempts = (!empty($this->site->passchkattempts)) ? $this->site->passchkattempts : 1;
 		$this->password = false;
 		$this->maxsize = (!empty($this->site->maxsizetopostprocess)) ? $this->site->maxsizetopostprocess : 100;
-
+		$this->sleeptime = (!empty($site->postdelay)) ? $site->postdelay : 300;
 		$this->videofileregex = '\.(AVI|F4V|IFO|M1V|M2V|M4V|MKV|MOV|MP4|MPEG|MPG|MPGV|MPV|QT|RM|RMVB|TS|VOB|WMV)';
 		$this->audiofileregex = '\.(AAC|AIFF|APE|AC3|ASF|DTS|FLAC|MKA|MKS|MP2|MP3|RA|OGG|OGM|W64|WAV|WMA)';
 		$this->supportfiles = "/\.(vol\d{1,3}\+\d{1,3}|par2|srs|sfv|nzb";
@@ -46,8 +45,7 @@ class PostProcess
 
 	public function processAll($threads=1)
 	{
-		$this->processSRRDB();
-		$this->processPredbMe();
+		$this->processPredb();
 		$this->processAdditional($threads);
 		$this->processNfos($threads);
 		$this->processMovies($threads);
@@ -59,25 +57,14 @@ class PostProcess
 	}
 
 	//
-	// Fetch titles from srrdb.com
+	// Fetch titles from predb sites.
 	//
-	public function processSRRDB()
+	public function processPredb()
 	{
-		$srrdb = new SRRDB;
-		$titles = $srrdb->retrieveTitles();
+		$predb = new Predb;
+		$titles = $predb->combinePre();
 		if ($this->echooutput && $titles > 0)
-			echo "Fetched ".$titles." new title(s) from srrdb.com\n";
-	}
-
-	//
-	// Fetch titles from predb.me
-	//
-	public function processPredbMe()
-	{
-		$srrdb = new PredbMe;
-		$titles = $srrdb->retrieveTitles();
-		if ($this->echooutput && $titles > 0)
-			echo "Fetched ".$titles." new title(s) from predb.me\n";
+			echo "Fetched ".$titles." new title(s) from predb sources.\n";
 	}
 
 	//
@@ -188,6 +175,11 @@ class PostProcess
 		$consoleTools = new ConsoleTools();
 		$rar = new RecursiveRarInfo();
 		$site = new Sites;
+		if ($threads > 1)
+		{
+			usleep($this->sleeptime*1000*($threads - 1));
+		}
+
 		$threads--;
 		$update_files = true;
 
@@ -225,7 +217,7 @@ class PostProcess
 				$query = sprintf("select r.ID, r.guid, r.name, c.disablepreview, r.size, r.groupID, r.nfostatus from releases r
 				left join category c on c.ID = r.categoryID
 				where nzbstatus = 1 and (r.passwordstatus between %d and -1)
-				AND (r.haspreview = -1 and c.disablepreview = 0) order by r.postdate desc limit %d,%d", $i, floor(($this->addqty)*($threads * 1.5)), $this->addqty);
+				AND (r.haspreview = -1 and c.disablepreview = 0) AND r.size < %d order by r.postdate desc limit %d,%d", $i, $this->maxsize*1073741824, floor(($this->addqty)*($threads * 1.5)), $this->addqty);
 				$result = $db->query($query);
 				if ($this->echooutput && count($result) > 0)
 					echo "Passwordstatus = ".$i.": Available to process = ".count($result)."\n";

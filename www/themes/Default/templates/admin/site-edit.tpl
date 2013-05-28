@@ -634,6 +634,14 @@
 </tr>
 
 <tr>
+	<td><label for="postdelay">Postprocessing Threads Delay</label>:</td>
+	<td>
+		<input class="tiny" id="postdelay" name="postdelay" type="text" value="{$fsite->postdelay}" />
+		<div class="hint">The time in milliseconds to delay postprocessing threaded startup. This will reduce bursting to mysql.</div>
+	</td>
+</tr>
+
+<tr>
 	<td><label for="binarythreads">Update Binaries Threads</label>:</td>
 	<td>
 		<input class="tiny" id="binarythreads" name="binarythreads" type="text" value="{$fsite->binarythreads}" />
@@ -670,6 +678,14 @@
 	<td>
 		<input class="tiny" id="releasedays" name="releaseretentiondays" type="text" value="{$fsite->releaseretentiondays}" />
 		<div class="hint">!!THIS IS NOT HEADER RETENTION!! The number of days releases will be retained for use throughout site. Set to 0 to disable.</div>
+	</td>
+</tr>
+
+<tr>
+	<td><label for="partretentionhours">Part Retention Hours</label>:</td>
+	<td>
+		<input class="tiny" id="parthours" name="partretentionhours" type="text" value="{$fsite->partretentionhours}" />
+		<div class="hint">The number of hours incomplete parts and binaries will be retained.</div>
 	</td>
 </tr>
 
