@@ -1,11 +1,12 @@
 #!/bin/bash
 
-PIDFILE="/var/www/nzedb/misc/cron/nzedb_update.pid"
-retrycountfile=/var/www/nzedb/misc/cron/retry_count
+BASEDIR=/var/www/nzedb
+PIDFILE="$BASEDIR/misc/cron/nzedb_update.pid"
+retrycountfile=$BASEDIR/misc/cron/retry_count
 retrycount=$(cat $retrycountfile)
 echo $retrycount
 
-if [ -f /var/www/nzedb/misc/cron/stop ]; then
+if [ -f $BASEDIR/misc/cron/stop ]; then
     echo "not running due to presence of stop file" >> /var/log/nzedb/update.log
     exit 0
 fi
@@ -39,22 +40,16 @@ PID=$$
 echo "PID = " $PID
 echo $PID > ${PIDFILE}
 
-#/var/www/nzedb/misc/cron/update.sh
-
-export NEWZNAB_PATH="/var/www/nzedb/misc/update_scripts"
-export ADMIN_PATH="/var/www/nzedb/www/admin"
-export TESTING_PATH="/var/www/nzedb/misc/testing"
+export NEWZNAB_PATH="$BASEDIR/misc/update_scripts"
+export TESTING_PATH="$BASEDIR/misc/testing"
 export NEWZNAB_BINUP="update_binaries.php"
 export NEWZNAB_RELUP="update_releases.php 1 false"
-export NEWZNAB_UPDATE_CLEANUP="update_cleanup.php"
-export NEWZNAB_IMPORT="nzb-importmodified.php /home/bfincher/nzbimport false"
-export UPDATE_PARSING="update_parsing.php"
 
 export LOG_DIR=/var/log/nzedb
 export BIN_LOG=$LOG_DIR/binup.log
 export REL_LOG=$LOG_DIR/relup.log
 
-countfile=/var/www/nzedb/misc/cron/count.txt
+countfile=$BASEDIR/misc/cron/count.txt
 
 count=$(cat $countfile)
 modulo=$(( $count%10 ))
@@ -78,8 +73,11 @@ php fixReleaseNames.php 1 true all yes >> $LOG_DIR/update.log
 php removeCrapReleases.php true 6 >> $LOG_DIR/update.log
 php delete_disabled_category_releases.php true >> $LOG_DIR/update.log
 
-cd ${NEWZNAB_PATH}/threaded_scripts
-python postprocess_threaded.py all >> $LOG_DIR/update.log
+#cd ${NEWZNAB_PATH}/threaded_scripts
+#python postprocess_threaded.py all >> $LOG_DIR/update.log
+
+cd ${NEWZNAB_PATH}/
+php postprocess.php all true >> $LOG_DIR/update.log
 
 cd ${TESTING_PATH}
 php clean_by_cat.php >> $LOG_DIR/update.log
