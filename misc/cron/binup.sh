@@ -64,8 +64,10 @@ echo $count > $countfile
 echo $count
 
 cd ${NEWZNAB_PATH}
+php backfill.php safe 1000000 >> $LOG_DIR/backfill.log
 php ${NEWZNAB_BINUP}  2>&1 >> $BIN_LOG
 php ${NEWZNAB_RELUP}  2>&1 >> $REL_LOG
+php nzbx_ws_hashdecrypt.php >> $LOG_DIR/update.log
 
 cd ${TESTING_PATH}/Release_scripts
 php fixReleaseNames.php 3 true all yes >> $LOG_DIR/update.log
@@ -73,14 +75,16 @@ php fixReleaseNames.php 1 true all yes >> $LOG_DIR/update.log
 php removeCrapReleases.php true 6 >> $LOG_DIR/update.log
 php delete_disabled_category_releases.php true >> $LOG_DIR/update.log
 
-#cd ${NEWZNAB_PATH}/threaded_scripts
-#python postprocess_threaded.py all >> $LOG_DIR/update.log
+cd ${NEWZNAB_PATH}/threaded_scripts
+python postprocess_threaded.py all >> $LOG_DIR/update.log
 
-cd ${NEWZNAB_PATH}/
-php postprocess.php all true >> $LOG_DIR/update.log
+#cd ${NEWZNAB_PATH}/
+#php postprocess.php all true >> $LOG_DIR/update.log
 
-cd ${TESTING_PATH}
-php clean_by_cat.php >> $LOG_DIR/update.log
+#cd ${TESTING_PATH}
+#php clean_by_cat.php >> $LOG_DIR/update.log
+
+echo "Done" >> $LOG_DIR/update.log
 
 rm $PIDFILE
 
