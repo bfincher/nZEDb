@@ -64,7 +64,7 @@ echo $count > $countfile
 echo $count
 
 cd ${NEWZNAB_PATH}
-php backfill.php safe 100000 >> $LOG_DIR/backfill.log
+#php backfill.php safe 100000 >> $LOG_DIR/backfill.log
 php ${NEWZNAB_BINUP}  2>&1 >> $BIN_LOG
 php ${NEWZNAB_RELUP}  2>&1 >> $REL_LOG
 php nzbx_ws_hashdecrypt.php >> $LOG_DIR/update.log
