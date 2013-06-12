@@ -1808,9 +1808,10 @@ class Releases
 		// Passworded releases.
 		if($page->site->deletepasswordedrelease == 1)
 		{
-			$result = $db->query("SELECT ID, guid FROM releases WHERE passwordstatus > 0"); 		
+			$result = $db->query("SELECT ID, guid, name FROM releases WHERE passwordstatus > 0"); 		
 			foreach ($result as $rowrel)
 			{
+				echo "Deleting passworded release ".$rowrel['name']."\n";
 				$this->fastDelete($rowrel['ID'], $rowrel['guid'], $this->site);
 				$passcount ++;
 			}
