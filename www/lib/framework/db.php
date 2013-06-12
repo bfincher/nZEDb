@@ -35,6 +35,7 @@ class DB
 		{
 			return "NULL";
 		} else {
+		$str = preg_replace("/[\x80-\xff]/", " ", $str);
 		return "'".DB::$db->real_escape_string($str)."'";
 	}
 	}
@@ -126,8 +127,8 @@ class DB
 			echo "Optimizing table: ".$tablename['Name'].".\n";
 			if (strtolower($tablename['Engine']) == "myisam")
 				$this->queryDirect("REPAIR TABLE `".$tablename['Name']."`");
+				$this->queryDirect("FLUSH TABLES");
 			$this->queryDirect("OPTIMIZE TABLE `".$tablename['Name']."`");
-			$this->queryDirect("FLUSH TABLES");
 		}
 		return $tablecnt;
 	}

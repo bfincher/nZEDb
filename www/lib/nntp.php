@@ -100,7 +100,7 @@ class Nntp extends Net_NNTP_Client
 		   //echo 'Error fetching part number '.$partMsgId.' in '.$groupname.' (Server response: '. $body->getMessage().')'."\n";
 		   return false;
 		}
-		
+
 		$message = $this->decodeYenc($body);
 		if (!$message) 
 		{
@@ -110,11 +110,41 @@ class Nntp extends Net_NNTP_Client
 
 		return $message;
 	}
-	
+
+	function get_Article($groupname, $partMsgId)
+	{
+		$summary = $this->selectGroup($groupname);
+		$message = $dec = '';
+
+		if (PEAR::isError($summary))
+		{
+			echo $summary->getMessage();
+			return false;
+		}
+
+		$body = $this->getArticle('<'.$partMsgId.'>', true);
+		//echo $this->getArticle('<'.$partMsgId.'>', true);
+		if (PEAR::isError($body))
+		{
+			//echo 'Error fetching part number '.$partMsgId.' in '.$groupname.' (Server response: '. $body->getMessage().')'."\n";
+			return false;
+		}
+
+		$message = $this->decodeYenc($body);
+		if (!$message)
+		{
+			//echo "Yenc decode failure";
+			return false;
+		}
+
+		return $message;
+	}
+
+
 	function getMessages($groupname, $msgIds)
 	{
 		$body = '';
-		
+
 		foreach ($msgIds as $m)
 		{
 			$message = $this->getMessage($groupname, $m);
@@ -172,24 +202,24 @@ class Nntp extends Net_NNTP_Client
 		}
 		return $message;
 	}
-	
+
 	function decodeYenc($yencodedvar)
 	{
 		$input = array();
 		preg_match("/^(=ybegin.*=yend[^$]*)$/ims", $yencodedvar, $input);
 		if (isset($input[1]))
-		{		
+		{
 			$ret = "";
 			$input = trim(preg_replace("/\r\n/im", "",  preg_replace("/(^=yend.*)/im", "", preg_replace("/(^=ypart.*\\r\\n)/im", "", preg_replace("/(^=ybegin.*\\r\\n)/im", "", $input[1], 1), 1), 1)));
-				
+
 			for( $chr = 0; $chr < strlen($input) ; $chr++)
 				$ret .= ($input[$chr] != "=" ? chr(ord($input[$chr]) - 42) : chr((ord($input[++$chr]) - 64) - 42));
-				
+
 			return $ret;
 		}
 		return false;
 	}
-	
+
 	/*
 	* Code by Wafflehouse : http://pastebin.com/A3YypDAJ
 	* Enable XFeature compression support for the current connection.
@@ -327,7 +357,7 @@ class Nntp extends Net_NNTP_Client
 		// Throw an error if we get out of the loop.
 		if (!feof($this->_socket)) 
 		{
-			return "Error: unexpected fgets() fail.\n";
+			return "\nError: unexpected fgets() fail.\n";
 		}
 		return $this->throwError('Decompression Failed, connection closed.', 1000);
 	}
