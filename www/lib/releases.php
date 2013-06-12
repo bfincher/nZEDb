@@ -1839,7 +1839,7 @@ class Releases
 		// Possibly passworded releases.
 		if($page->site->deletepossiblerelease == 1)
 		{
-			$result = $db->query("SELECT ID, guid FROM releases WHERE passwordstatus = 1");
+			$result = $db->query("SELECT ID, guid, name FROM releases WHERE passwordstatus = 1");
 			foreach ($result as $rowrel)
 			{
 				echo "Deleting passworded release ".$rowrel['name']."\n";
