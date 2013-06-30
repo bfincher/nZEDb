@@ -380,7 +380,7 @@
 			<tr>
 				<td><label for="DEHASH">Decrypt Hash Based Release Names:</label></td>
 				<td>
-					{html_radios id="DEHASH" name='DEHASH' values=$truefalse_names output=$truefalse_names selected=$ftmux->DEHASH separator='<br />'}
+					{html_options class="siteeditstyle" id="DEHASH" name='DEHASH' values=$dehash_ids output=$dehash_names selected=$ftmux->DEHASH}
 					<div class="hint">Choose to run Decrypt Hashes true/false</div>
 				</td>
 			</tr>
@@ -395,7 +395,8 @@
 			<tr>
 				<td><label for="explain">Information:</label></td>
 				<td>
-					<div class="explanation">Decrypt hashes only works on a.b.inner-sanctum and only works form releases posted buy doggo. If you do not index that group, there is no need to enable this.</div>
+					<div class="explanation">Decrypt hashes only works on a.b.inner-sanctum and only works form releases posted buy doggo. If you do not index that group, there is no need to enable this.<br />
+					Included in the same pane is Update Predb. This scrapes several predb sites and then tries to match against releases.</div>
 				</td>
 			</tr>
 		</table>
@@ -525,6 +526,18 @@
 				<td>
 					{html_radios id="CONSOLE" name='CONSOLE' values=$truefalse_names output=$truefalse_names selected=$ftmux->CONSOLE separator='<br />'}
 					<div class="hint">Open an empty bash shell. The pane for this can not be created after tmux starts.</div>
+				</td>
+			</tr>
+
+			<tr>
+				<td style="width:160px;"><label for="COLORS">256 Colors:</label></td>
+				<td>
+					<input id="COLORS_START" name="COLORS_START" class="short" type="text" value="{$ftmux->COLORS_START}" />
+					<input id="COLORS_END" name="COLORS_END" class="short" type="text" value="{$ftmux->COLORS_END}" /><br />
+					<input id="COLORS_EXC" name="COLORS_EXC" class="longer" type="text" value="{$ftmux->COLORS_EXC}" />
+					<div class="hint">The color displayed is tmux scripts is randomized from this list.<br />
+					The first box is the start number, the second box is the end number and the last box are the exceptions. An array is created from these numbers.<br />
+					If you connect using putty, then under Window/Translation set Remote character set to UTF-8 and check "Copy and paste line drawing characters". To use 256 colors, you must set Connection/Data Terminal-type string to "xterm-256color" and in Window/Colours check the top three boxes, otherwise only 16 colors are displayed. If you are using FreeBSD, you will need to add export TERM=xterm-256color to your .bashrc file to show 256 colors.</div>
 				</td>
 			</tr>
 		</table>
