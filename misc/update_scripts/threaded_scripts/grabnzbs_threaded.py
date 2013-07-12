@@ -13,7 +13,7 @@ except ImportError:
 	sys.exit("\nPlease install cymysql for python 3, \ninformation can be found in INSTALL.txt\n")
 import subprocess
 import string
-import info
+import lib.info as info
 import signal
 import datetime
 
@@ -32,7 +32,7 @@ grab = cur.fetchone()
 if int(grab[0]) == 0:
 	sys.exit("GrabNZBs is disabled")
 
-cur.execute("select collectionhash from nzbs group by collectionhash, totalparts having count(*) >= totalparts")
+cur.execute("select collectionhash from nzbs group by collectionhash, totalparts having count(*) >= totalparts union select distinct(collectionhash) from nzbs where dateadded < now() - interval 2 hour")
 datas = cur.fetchall()
 if len(datas) == 0:
 	sys.exit("No NZBs to Grab")
@@ -85,7 +85,7 @@ def main():
 			p.setDaemon(False)
 			p.start()
 
-	print("\n\nGrabNZBs Threaded Started at %s" %(datetime.datetime.now().strftime("%H:%M:%S")))
+	print("\n\nGrabNZBs Threaded Started at %s" % (datetime.datetime.now().strftime("%H:%M:%S")))
 
 	#now load some arbitrary jobs into the queue
 	for gnames in datas:
@@ -93,10 +93,10 @@ def main():
 
 	my_queue.join()
 
-	final = "true"
+	final = "limited"
 	subprocess.call(["php", pathname+"/../../testing/DB_scripts/populate_nzb_guid.php", ""+final])
-	print("\n\nGrabNZBs Threaded Completed at %s" %(datetime.datetime.now().strftime("%H:%M:%S")))
-	print("Running time: %s" %(str(datetime.timedelta(seconds=time.time() - start_time))))
+	print("\n\nGrabNZBs Threaded Completed at %s" % (datetime.datetime.now().strftime("%H:%M:%S")))
+	print("Running time: %s" % (str(datetime.timedelta(seconds=time.time() - start_time))))
 
 
 if __name__ == '__main__':

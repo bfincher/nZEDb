@@ -13,11 +13,11 @@ except ImportError:
 	sys.exit("\nPlease install cymysql for python 3, \ninformation can be found in INSTALL.txt\n")
 import subprocess
 import string
-import info
+import lib.info as info
 import signal
 import datetime
 
-threads = 20
+threads = 10
 start_time = time.time()
 pathname = os.path.abspath(os.path.dirname(sys.argv[0]))
 conf = info.readConfig()
@@ -28,8 +28,8 @@ con = mdb.connect(host=conf['DB_HOST'], user=conf['DB_USER'], passwd=conf['DB_PA
 con.autocommit(True)
 cur = con.cursor()
 
-cur.execute("UPDATE releases SET reqidstatus = -1 WHERE reqidstatus = 0 and relnamestatus = 1 AND name REGEXP '^\\[[[:digit:]]+\\]' = 0")
-cur.execute("SELECT r.ID, r.name, g.name groupName FROM releases r LEFT JOIN groups g ON r.groupID = g.ID WHERE relnamestatus = 1 AND reqidstatus = 0 AND r.name REGEXP '^\\[[[:digit:]]+\\]' = 1")
+cur.execute("UPDATE releases SET reqidstatus = -1 WHERE reqidstatus = 0 AND nzbstatus = 1 AND relnamestatus = 1 AND name REGEXP '^\\[[[:digit:]]+\\]' = 0")
+cur.execute("SELECT r.ID, r.name, g.name groupName FROM releases r LEFT JOIN groups g ON r.groupID = g.ID WHERE relnamestatus = 1 AND nzbstatus = 1 AND reqidstatus = 0 AND r.name REGEXP '^\\[[[:digit:]]+\\]' = 1")
 datas = cur.fetchall()
 
 #close connection to mysql
@@ -83,7 +83,7 @@ def main():
 
 	#now load some arbitrary jobs into the queue
 	for release in datas:
-		my_queue.put("%s                       %s                       %s" %(release[0], release[1], release[2]))
+		my_queue.put("%s                       %s                       %s" % (release[0], release[1], release[2]))
 
 	my_queue.join()
 
