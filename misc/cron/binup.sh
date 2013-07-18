@@ -65,22 +65,22 @@ echo $count
 
 cd ${NEWZNAB_PATH}
 #php backfill.php safe 100000 >> $LOG_DIR/backfill.log
-php ${NEWZNAB_BINUP}  2>&1 >> $BIN_LOG
-php ${NEWZNAB_RELUP}  2>&1 >> $REL_LOG
-php decrypt_hashes 2>&1 >> $LOG_DIR/update.log
+php ${NEWZNAB_BINUP} >> $BIN_LOG 2>&1
+php ${NEWZNAB_RELUP} >> $REL_LOG 2>&1
+php decrypt_hashes >> $LOG_DIR/update.log 2>&1
 
 cd ${TESTING_PATH}/Release_scripts
-php fixReleaseNames.php 3 true all yes 2>&1 >> $LOG_DIR/update.log
-php fixReleaseNames.php 1 true all yes 2>&1 >> $LOG_DIR/update.log
-php removeCrapReleases.php true 6 2>&1 >> $LOG_DIR/update.log
-php delete_disabled_category_releases.php true 2>&1 >> $LOG_DIR/update.log
+php fixReleaseNames.php 3 true all yes >> $LOG_DIR/update.log 2>&1
+php fixReleaseNames.php 1 true all yes >> $LOG_DIR/update.log 2>&1
+php removeCrapReleases.php true 6 >> $LOG_DIR/update.log 2>&1
+php delete_disabled_category_releases.php true >> $LOG_DIR/update.log 2>&1
 
 
 #cd ${NEWZNAB_PATH}/threaded_scripts
 #python postprocess_threaded.py all >> $LOG_DIR/update.log
 
 cd ${NEWZNAB_PATH}/
-php postprocess.php all true 2>&1 >> $LOG_DIR/update.log
+php postprocess.php all true >> $LOG_DIR/update.log 2>&1
 
 #cd ${TESTING_PATH}
 #php clean_by_cat.php >> $LOG_DIR/update.log
