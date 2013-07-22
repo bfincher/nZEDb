@@ -35,6 +35,7 @@ require_once dirname(__FILE__).'/archivereader.php';
  */
 class SfvInfo extends ArchiveReader
 {
+public $isEncrypted = false;
 	/**
 	 * SFV file comments.
 	 * @var string

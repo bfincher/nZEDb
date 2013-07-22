@@ -76,6 +76,7 @@ require_once dirname(__FILE__).'/sfvinfo.php';
  */
 class ArchiveInfo extends ArchiveReader
 {
+public $isEncrypted = false;
 	/**#@+
 	 * Supported archive types.
 	 */
