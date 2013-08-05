@@ -1955,7 +1955,7 @@ class Releases
 		// Passworded releases.
 		if($page->site->deletepasswordedrelease == 1)
 		{
-			$result = $db->query("SELECT ID, guid FROM releases WHERE passwordstatus = ".Releases::PASSWD_RAR);
+			$result = $db->query("SELECT ID, guid, name FROM releases WHERE passwordstatus = ".Releases::PASSWD_RAR);
 			foreach ($result as $rowrel)
 			{
 				echo "Deleting passworded release ".$rowrel['name']."\n";
@@ -1967,7 +1967,7 @@ class Releases
 		// Possibly passworded releases.
 		if($page->site->deletepossiblerelease == 1)
 		{
-			$result = $db->query("SELECT ID, guid FROM releases WHERE passwordstatus = ".Releases::PASSWD_POTENTIAL);
+			$result = $db->query("SELECT ID, guid, name FROM releases WHERE passwordstatus = ".Releases::PASSWD_POTENTIAL);
 			foreach ($result as $rowrel)
 			{
 				echo "Deleting passworded release ".$rowrel['name']."\n";
