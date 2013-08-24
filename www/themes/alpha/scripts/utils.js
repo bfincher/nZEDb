@@ -60,6 +60,7 @@ jQuery(function ($) {
                 title: 'ADDED!',
                 text: 'Its now in your Cart! ^_^',
                 type: 'success',
+                animate_speed: 'fast',
                 icon: 'icon-info-sign'
             });
 
@@ -80,6 +81,7 @@ jQuery(function ($) {
                 title: 'ADDED TO SAB!',
                 text: 'Its now in the queue!! ^_^',
                 type: 'info',
+                animate_speed: 'fast',
                 icon: 'icon-info-sign'
             });
         });
@@ -99,6 +101,7 @@ jQuery(function ($) {
                 title: 'ADDED!',
                 text: 'Its now in your Cart! ^_^',
                 type: 'success',
+                animate_speed: 'fast',
                 icon: 'icon-info-sign'
             });
         });
@@ -118,6 +121,7 @@ jQuery(function ($) {
                 title: 'ADDED TO SAB!',
                 text: 'Its now in the queue!! ^_^',
                 type: 'info',
+                animate_speed: 'fast',
                 icon: 'icon-info-sign'
             });
 
@@ -164,7 +168,7 @@ jQuery(function ($) {
 
 
     $('#nzb_multi_operations_form').submit(function () {return false;});
-    $('input.nzb_multi_operations_download').click(function () {
+    $('button.nzb_multi_operations_download').click(function () {
         var ids = "";
         $("table.data INPUT[type='checkbox']:checked").each( function (i, row) {
             if ($(row).val()!="on")
@@ -174,59 +178,61 @@ jQuery(function ($) {
         if (ids)
             window.location = SERVERROOT + "getnzb?zip=1&id="+ids;
     });
-    $('input.nzb_multi_operations_cart').click(function () {
-        var guids = [];
-        $("table.data INPUT[type='checkbox']:checked").each( function (i, row) {
+    $('button.nzb_multi_operations_cart').click(function () {
+        var guids = new Array();
+        $("table.data INPUT[type='checkbox']:checked").each( function(i, row) {
             var guid = $(row).val();
             var $cartIcon = $(row).parent().parent().children('td.icons').children('.icon_cart');
             if (guid && !$cartIcon.hasClass('icon_cart_clicked')){
-                $cartIcon.addClass('icon_cart_clicked').attr('title','Added to Cart');    // consider doing this only upon success
+                $cartIcon.addClass('icon_cart_clicked').attr('title','Added to Cart');  // consider doing this only upon success
                 guids.push(guid);
                 $.pnotify({
                     title: 'ADDED!',
                     text: 'Its now in your Cart! ^_^',
                     type: 'success',
-                    icon: 'fa-icon-info-sign'
+                    animate_speed: 'fast',
+                    icon: 'icon-info-sign'
                 });
             }
-            $(this).attr('checked', false);
+            $(this).prop('checked', false);
         });
-        $.post( SERVERROOT + "cart?add", { 'add': guids });
+        $.post( SERVERROOT + "cart?add=" + guids);
     });
-    $('input.nzb_multi_operations_sab').click(function () {
-        $("table.data INPUT[type='checkbox']:checked").each( function (i, row) {
+    $('button.nzb_multi_operations_sab').click(function () {
+        $("table.data INPUT[type='checkbox']:checked").each( function(i, row) {
             var $sabIcon = $(row).parent().parent().children('td.icons').children('.icon_sab');
             var guid = $(row).val();
             if (guid && !$sabIcon.hasClass('icon_sab_clicked')) {
                 var nzburl = SERVERROOT + "sendtosab/" + guid;
-                $.post( nzburl, function (resp) {
+                $.post( nzburl, function(resp){
                     $sabIcon.addClass('icon_sab_clicked').attr('title','Added to Queue');
-                            $.pnotify({
-                                    title: 'ADDED TO SAB!',
-                                    text: 'Its now in the queue!! ^_^',
-                                    type: 'info',
-                                    icon: 'fa-icon-info-sign'
-                                });
+                    $.pnotify({
+                            title: 'ADDED TO SAB!',
+                            text: 'Its now in the queue!! ^_^',
+                            type: 'info',
+                            animate_speed: 'fast',
+                            icon: 'icon-info-sign'
+                        });
                 });
             }
-            $(this).attr('checked', false);
+            $(this).prop('checked', false);
         });
     });
     //front end admin functions
-    $('input.nzb_multi_operations_edit').click(function () {
+    $('button.nzb_multi_operations_edit').click(function () {
         var ids = "";
         $("table.data INPUT[type='checkbox']:checked").each( function (i, row) {
             if ($(row).val()!="on")
                 ids += '&id[]='+$(row).val();
         });
         if (ids)
-            $('input.nzb_multi_operations_edit').colorbox({
+            $('button.nzb_multi_operations_edit').colorbox({
                 href: function () { return SERVERROOT + "ajax_release-admin?action=edit"+ids+"&from="+encodeURIComponent(window.location); },
                 title: 'Edit Release',
                 innerWidth:"400px", innerHeight:"250px", initialWidth:"400px", initialHeight:"250px", speed:0, opacity:0.7
             });
     });
-    $('input.nzb_multi_operations_delete').click(function () {
+    $('button.nzb_multi_operations_delete').click(function () {
         var ids = "";
         $("table.data INPUT[type='checkbox']:checked").each( function (i, row) {
             if ($(row).val()!="on")
@@ -240,7 +246,7 @@ jQuery(function ($) {
             }
     });
     //cart functions
-    $('input.nzb_multi_operations_cartdelete').click(function () {
+    $('button.nzb_multi_operations_cartdelete').click(function () {
         var ids = [];
         $("table.data INPUT[type='checkbox']:checked").each( function (i, row) {
             if ($(row).val()!="on")
@@ -499,6 +505,38 @@ jQuery(function ($) {
                     this.set('content.text', data);
                  }
                 }
+            },
+            style: {
+                classes: 'qtip-dark qtip-shadow qtip-rounded',
+                width: { max: 500 },
+                tip: { // Now an object instead of a string
+                    corner: 'topLeft', // We declare our corner within the object using the corner sub-option
+                    size: {
+                        x: 8, // Be careful that the x and y values refer to coordinates on screen, not height or width.
+                        y : 8 // Depending on which corner your tooltip is at, x and y could mean either height or width!
+                    }
+                }
+            }
+        });
+    });
+
+    // preinfo tooltip
+    $(".preinfo").each(function() {
+        var preID = $(this).attr('title');
+        $(this).qtip({
+            content: {
+              title: {
+                  text: 'PreDB info...'
+              },
+              text: 'loading...', // The text to use whilst the AJAX request is loading
+              ajax: {
+                 url: SERVERROOT + 'ajax_preinfo', // URL to the local file
+                 type: 'GET', // POST or GET
+                 data: { id: preID }, // Data to pass along with your request
+                 success: function(data, status) {
+                    this.set('content.text', data);
+                 }
+              }
             },
             style: {
                 classes: 'qtip-dark qtip-shadow qtip-rounded',

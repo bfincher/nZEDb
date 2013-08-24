@@ -1,12 +1,13 @@
 {if $results|@count > 0}
-<div class="row">
+<div class="container">
 	<div class="pull-left"><i class="icon-rss-sign icon-2x" style="color:orange;"></i> Download your cart as an <a href="{$smarty.const.WWW_TOP}/rss?t=-2&amp;dl=1&amp;i={$userdata.ID}&amp;r={$userdata.rsstoken}&amp;del=1">Rss Feed</a>.</div>
-		<form id="nzb_multi_operations_form" action="get">
-			<div class="nzb_multi_operations pull-right">
-					With Selected: <input type="button" class="btn btn-danger btn-small nzb_multi_operations_cartdelete" value="Delete">
-			</div>
-		</form>
 </div>
+<br>
+<form id="nzb_multi_operations_form" action="get">
+<div class="container nzb_multi_operations text-right" style="margin-bottom:5px;">
+					With Selected: <button type="button" class="btn btn-danger btn-sm nzb_multi_operations_cartdelete">Delete</button>
+			</div>
+
 
 <table class="table table-condensed table-highlight table-striped data" id="browsetable">
 	<thead>
@@ -19,7 +20,7 @@
 </thead>
 <tbody>
 	{foreach from=$results item=result}
-		<tr class="{cycle values=",alt"}">
+		<tr>
 			<td style="text-align:center;" class="check"><input id="chk{$result.guid|substr:0:7}" type="checkbox" class="nzb_check" value="{$result.ID}" /></td>
 			<td style="text-align:left;">
 				<a title="View details" href="{$smarty.const.WWW_TOP}/details/{$result.guid}/{$result.searchname|escape:"htmlall"}">{$result.searchname|escape:"htmlall"|wordwrap:75:"\n":true}</a>
@@ -30,8 +31,9 @@
 	{/foreach}
 </tbody>
 </table>
-
+		</form>
 
 {else}
 <h2>No NZBs in cart</h2>
 {/if}
+</div>

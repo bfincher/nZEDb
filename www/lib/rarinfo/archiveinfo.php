@@ -6,6 +6,7 @@ require_once dirname(__FILE__).'/zipinfo.php';
 require_once dirname(__FILE__).'/srrinfo.php';
 require_once dirname(__FILE__).'/par2info.php';
 require_once dirname(__FILE__).'/sfvinfo.php';
+require_once dirname(__FILE__).'/szipinfo.php';
 
 /**
  * ArchiveInfo class.
@@ -72,7 +73,7 @@ require_once dirname(__FILE__).'/sfvinfo.php';
  * @author     Hecks
  * @copyright  (c) 2010-2013 Hecks
  * @license    Modified BSD
- * @version    2.0
+ * @version    2.2
  */
 class ArchiveInfo extends ArchiveReader
 {
@@ -86,6 +87,7 @@ public $isEncrypted = false;
 	const TYPE_SRR     = 0x0008;
 	const TYPE_SFV     = 0x0010;
 	const TYPE_PAR2    = 0x0020;
+	const TYPE_SZIP    = 0x0040;
 
 	/**#@-*/
 
@@ -104,6 +106,7 @@ public $isEncrypted = false;
 		self::TYPE_PAR2 => 'Par2Info',
 		self::TYPE_ZIP  => 'ZipInfo',
 		self::TYPE_SFV  => 'SfvInfo',
+		self::TYPE_SZIP => 'SzipInfo',
 	);
 
 	/**
@@ -144,8 +147,8 @@ public $isEncrypted = false;
 	 *        ArchiveInfo::TYPE_ZIP => 'path_to_unzip_client',
 	 *    ));
 	 *
-	 * Note that support for extracting embedded encrypted files is not currently
-	 * supported due to recursion issues.
+	 * Note that extracting embedded encrypted files is not currently supported
+	 * due to recursion issues.
 	 *
 	 * @param   array  $clients  list of external clients
 	 * @return  void
@@ -161,6 +164,20 @@ public $isEncrypted = false;
 		if ($this->reader) {
 			unset($this->error);
 		}
+	}
+
+	/**
+	 * Sets the regex string (minus delimiters and brackets) for filtering valid
+	 * archive extensions when inspecting archive contents recursively. This check
+	 * can be disabled completely by setting the value to NULL.
+	 *
+	 * @param   string  $extensions  the regex of archive file extensions
+	 * @return  void
+	 */
+	public function setArchiveExtensions($extensions)
+	{
+		$this->extensions = $extensions;
+		$this->archives = array();
 	}
 
 	/**
@@ -232,6 +249,8 @@ public $isEncrypted = false;
 				return $this->reader->getPackets();
 			case self::TYPE_ZIP:
 				return $this->reader->getRecords();
+			case self::TYPE_SZIP:
+				return $this->reader->getHeaders();
 			case self::TYPE_SFV:
 				return $this->reader->getFileList();
 			default:
@@ -257,7 +276,7 @@ public $isEncrypted = false;
 	 */
 	public function allowsRecursion()
 	{
-		return ($this->type == self::TYPE_RAR || $this->type == self::TYPE_ZIP);
+		return (bool) ($this->type & (self::TYPE_RAR | self::TYPE_ZIP | self::TYPE_SZIP));
 	}
 
 	/**
@@ -285,7 +304,13 @@ public $isEncrypted = false;
 
 	/**
 	 * Lists any embedded archives, either as raw ArchiveInfo objects or as file
-	 * summaries, and caches the object list locally.
+	 * summaries, and caches the object list locally. The optional filtering of
+	 * valid archive extensions can be disabled by first calling:
+	 *
+	 *    $archive->setArchiveExtensions(null);
+	 *
+	 * This will mean that all files in the archive will be inspected, regardless
+	 * of their extensions - less efficient, more paranoid & probably buggier ;)
 	 *
 	 * @param   boolean  $summary  return file summaries?
 	 * @return  array|boolean  list of stored objects/summaries, or false on error
@@ -296,11 +321,12 @@ public $isEncrypted = false;
 			return false;
 
 		if (empty($this->archives)) {
+			$extensions = !empty($this->extensions) ? "/^({$this->extensions})$/" : false;
 			foreach ($this->reader->getFileList() as $file) {
-				$ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-				if (preg_match('/(rar|r[0-9]+|zip|srr|par2|sfv)/', $ext)
-					&& ($archive = $this->getArchive($file['name']))
-					&& ($archive->type != self::TYPE_NONE || empty($archive->readers))
+				if ($extensions && !preg_match($extensions, pathinfo($file['name'], PATHINFO_EXTENSION)))
+					continue;
+				if (($archive = $this->getArchive($file['name']))
+				 && ($archive->type != self::TYPE_NONE || empty($archive->readers))
 				) {
 					$this->archives[$file['name']] = $archive;
 				}
@@ -345,6 +371,7 @@ public $isEncrypted = false;
 				// Create the new archive object
 				$archive = new self;
 				$archive->externalClients = $this->externalClients;
+				$archive->extensions = $this->extensions;
 				if ($this->inheritReaders) {
 					$archive->setReaders($this->readers, true);
 				}
@@ -657,6 +684,12 @@ public $isEncrypted = false;
 	 * @var boolean
 	 */
 	protected $isTemporary = false;
+
+	/**
+	 * The regex for filtering any valid archive extensions.
+	 * @var string
+	 */
+	protected $extensions = 'rar|r[0-9]+|zip|srr|par2|sfv|7z|[0-9]+';
 
 	/**
 	 * Parses the source file/data by delegation to one of the configured readers,
