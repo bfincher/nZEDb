@@ -67,7 +67,7 @@ cd ${NEWZNAB_PATH}
 #php backfill.php safe 100000 >> $LOG_DIR/backfill.log
 php ${NEWZNAB_BINUP} >> $BIN_LOG 2>&1
 php ${NEWZNAB_RELUP} >> $REL_LOG 2>&1
-php decrypt_hashes >> $LOG_DIR/update.log 2>&1
+php decrypt_hashes.php >> $LOG_DIR/update.log 2>&1
 
 cd ${TESTING_PATH}/Release_scripts
 php fixReleaseNames.php 3 true all yes >> $LOG_DIR/update.log 2>&1
