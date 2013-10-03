@@ -201,7 +201,7 @@ class Binaries
 				if ($newdatek !== false)
 					$lastr_date = $newdatek;
 
-				$db->queryExec(sprintf('UPDATE groups SET last_record = %d, last_record_postdate = %s, last_updated = NOW() WHERE id = %d', $lastId, $db->from_unixtime($lastr_postdate), $groupArr['id']));
+				$db->queryExec(sprintf('UPDATE groups SET last_record = %s, last_record_postdate = %s, last_updated = NOW() WHERE id = %d', $lastId, $db->from_unixtime($lastr_postdate), $groupArr['id']));
 
 				if ($last == $grouplast)
 					$done = true;
