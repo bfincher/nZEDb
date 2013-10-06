@@ -364,10 +364,10 @@ SELECT pg_catalog.setval('allgroups_id_seq', 1, true);
 -- Table: allgroups
 DROP TABLE IF EXISTS "allgroups" CASCADE;
 CREATE TABLE "allgroups" (
-  "id" int(11) NOT NULL AUTO_INCREMENT,
-  "name" varchar(255) NOT NULL DEFAULT "",
-  "first_record" bigint UNSIGNED NOT NULL DEFAULT "0",
-  "last_record" bigint UNSIGNED NOT NULL DEFAULT "0",
+  "id" bigint DEFAULT nextval('allgroups_id_seq'::regclass) NOT NULL,
+  "name" character varying(255) DEFAULT '0'::character varying NOT NULL,
+  "first_record" bigint DEFAULT 0 NOT NULL,
+  "last_record" bigint DEFAULT 0 NOT NULL,
   "updated" timestamp without time zone NOT NULL
 ) 
 WITHOUT OIDS;
@@ -624,9 +624,9 @@ SELECT pg_catalog.setval('country_id_seq', 1, true);
 -- Table: country
 DROP TABLE IF EXISTS "country" CASCADE;
 CREATE TABLE "country" (
-  "id" int(11) NOT NULL AUTO_INCREMENT,
-  "name" varchar(255) NOT NULL DEFAULT "",
-  "code" char(2) NOT NULL DEFAULT "",
+  "id" bigint DEFAULT nextval('country_id_seq'::regclass) NOT NULL,
+  "name" character varying(255) DEFAULT '0'::character varying NOT NULL,
+  "country" character varying(2) NOT NULL,
 )
 WITHOUT OIDS;
 
@@ -1404,7 +1404,7 @@ INSERT INTO site
 	('segmentstodownload', '2'),
 	('ffmpeg_duration', '5'),
 	('ffmpeg_image_time', '5'),
-	('request_url', 'http://predb_irc.nzedb.com/predb_irc.php?reqid=[REQUEST_ID]&group=[GROUP_NM]'),
+	('request_url', 'http://predbirc.nzedb.com/predb_irc.php?reqid=[REQUEST_ID]&group=[GROUP_NM]'),
 	('lookup_reqids', '1'),
 	('grabnzbthreads', '1'),
 	('loggingopt', '2'),
@@ -1415,7 +1415,7 @@ INSERT INTO site
 	('addpar2', '0'),
 	('fixnamethreads', '1'),
 	('fixnamesperrun', '10'),
-	('sqlpatch','127');
+	('sqlpatch','129');
 
 
 INSERT INTO tmux (setting, value) values ('DEFRAG_CACHE','900'),
@@ -11930,6 +11930,8 @@ DROP INDEX IF EXISTS "releases_consoleinfoid" CASCADE;
 CREATE INDEX "releases_consoleinfoid" ON "releases" ("consoleinfoid");
 DROP INDEX IF EXISTS "releases_bookinfoid" CASCADE;
 CREATE INDEX "releases_bookinfoid" ON "releases" ("bookinfoid");
+DROP INDEX IF EXISTS "releases_mergedreleases" CASCADE;
+CREATE INDEX "releases_mergedreleases" ON "releases" ("dehashstatus", "relnamestatus", "passswordstatus");
 DROP INDEX IF EXISTS "releases_haspreview" CASCADE;
 CREATE INDEX "releases_haspreview" ON "releases" ("haspreview");ALTER TABLE "releasesubs" ADD CONSTRAINT "releasesubs_id_pkey" PRIMARY KEY("id");
 DROP INDEX IF EXISTS "releasesubs_releaseID_subsid" CASCADE;
