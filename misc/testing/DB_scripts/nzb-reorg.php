@@ -25,13 +25,14 @@ $time = TIME();
 
 foreach($objects as $filestoprocess => $nzbFile)
 {
-    if($nzbFile->getExtension() != "gz")
-        continue;
+	if($nzbFile->getExtension() != "gz")
+		continue;
 	$consoleTools->overWrite("Getting filecount: ".$iFilesCounted++." nzbs  ");
 }
 $time1 = TIME();
 
 echo "\nReorganizing files to Level ".$newLevel." from: ".$sourcePath." This could take a while...\n";
+$consoleTools = new ConsoleTools();
 foreach($objects as $filestoprocess => $nzbFile)
 {
 	if($nzbFile->getExtension() != "gz")
@@ -49,6 +50,7 @@ foreach($objects as $filestoprocess => $nzbFile)
 	$consoleTools->overWrite("Reorganized ".$iFilesProcessed."/".$iFilesCounted."(".$perc."%) - est. ".$est." minutes  ");
 }
 
+$db = new DB();
 $db->queryExec(sprintf("UPDATE site SET value = %s WHERE setting = 'nzbsplitlevel'", $argv[1]));
 exit("Processed ".$iFilesProcessed." nzbs in ".relativeTime($time)."\n");
 

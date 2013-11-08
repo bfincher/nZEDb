@@ -16,9 +16,9 @@ else
 	$first = '555313070';
 
 if (isset($argv[1]))
-    $group = $argv[1];
+	$group = $argv[1];
 else
-    $group = 'alt.binaries.teevee';
+	$group = 'alt.binaries.teevee';
 
 // Select a group.
 $groupArr = $nntp->selectGroup($group);
@@ -30,10 +30,9 @@ $msg = $nntp->getOverview($first.'-'.$first,true,false);
 // Print out the array of headers.
 print_r($msg);
 
-
 // get postdate for an article
 $backfill = new Backfill();
-$newdate = $backfill->postdate($nntp, $first, false, $group, true);
+$newdate = $backfill->postdate(null, $first, false, $group, true);
 
 if ($newdate != false)
 	echo "The posted date for ".$group.", article ".$first." is ".date('Y-m-d H:i:s', $newdate)."\n";
