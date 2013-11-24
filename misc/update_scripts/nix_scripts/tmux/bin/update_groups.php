@@ -1,34 +1,49 @@
 <?php
-require_once(dirname(__FILE__)."/../../../config.php");
-require_once(WWW_DIR."lib/framework/db.php");
-require_once(WWW_DIR."lib/nntp.php");
+require_once dirname(__FILE__) . '/../../../config.php';
+require_once nZEDb_LIB . 'framework/db.php';
+require_once nZEDb_LIB . 'nntp.php';
+require_once nZEDb_LIB . 'ColorCLI.php';
+require_once nZEDb_LIB . 'consoletools.php';
+require_once nZEDb_LIB . 'site.php';
+
+$start = TIME();
+$c = new ColorCLI;
+$consoleTools = new Consoletools();
+$s = new Sites();
+$site = $s->get();
+
+// Create the connection here and pass
+$nntp = new Nntp();
+if ($nntp->doConnect() === false)
+	exit($c->error("Unable to connect to usenet."));
+if ($site->nntpproxy === "1")
+	usleep(500000);
+
+echo $c->header("Getting first/last for all your active groups.");
+$data = $nntp->getGroups();
+if (PEAR::isError($data))
+	exit($c->error("Failed to getGroups() from nntp server."));
+
+if ($site->nntpproxy != "1")
+	$nntp->doQuit();
 
 $db = new DB();
-$db->queryExec("TRUNCATE TABLE shortgroups");
-
-$nntp = new Nntp();
-$nntp->doConnect();
-
-echo "Getting first/last for all your active groups\n";
-$data = $nntp->getGroups();
-$nntp->doQuit();
+$db->queryExec('TRUNCATE TABLE shortgroups');
 
 // Put into an array all active groups
 $res = $db->query('SELECT name FROM groups WHERE active = 1');
 
-if (PEAR::isError($data))
-	exit("Failed to getGroups() from nntp server.\n");
-
-echo "Inserting new values into shortgroups table\n";
+echo $c->header("Inserting new values into shortgroups table.");
 
 foreach ($data as $newgroup)
 {
-	if (myInArray($res, $newgroup['group'], "name"))
+	if (myInArray($res, $newgroup['group'], 'name'))
 	{
-		$db->queryInsert(sprintf("INSERT INTO shortgroups (name, first_record, last_record, updated) VALUES (%s, %s, %s, NOW())", $db->escapeString($newgroup["group"]), $db->escapeString($newgroup["first"]), $db->escapeString($newgroup["last"])));
-		echo 'Updated '.$newgroup['group']."\n";
+		$db->queryInsert(sprintf('INSERT INTO shortgroups (name, first_record, last_record, updated) VALUES (%s, %s, %s, NOW())', $db->escapeString($newgroup['group']), $db->escapeString($newgroup['first']), $db->escapeString($newgroup['last'])));
+		echo $c->primary('Updated '.$newgroup['group']);
 	}
 }
+echo $c->header('Running time: '.$consoleTools->convertTimer(TIME() - $start));
 
 function myInArray($array, $value, $key){
 	//loop through the array
@@ -48,3 +63,4 @@ function myInArray($array, $value, $key){
 	}
 	return false;
 }
+?>

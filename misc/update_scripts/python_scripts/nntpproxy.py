@@ -1,4 +1,5 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import json
 import time
@@ -7,6 +8,7 @@ import socket
 import SocketServer
 import socketpool
 import nntp
+from lib.info import bcolors
 
 class NNTPClientConnector(socketpool.Connector, nntp.NNTPClient):
 
@@ -21,7 +23,7 @@ class NNTPClientConnector(socketpool.Connector, nntp.NNTPClient):
 			raise ValueError("Bad backend")
 		nntp.NNTPClient.__init__(self, self.host, self.port, username, password, timeout=timeout, use_ssl=use_ssl)
 		self.id = self.socket.getsockname()[1]
-		print("%5d NEW CONNECTION" % self.id)
+		print(bcolors.HEADER + "%5d NEW CONNECTION" % self.id)
 		self._connected = True
 		self.xfeature_compress_gzip()
 
@@ -94,7 +96,7 @@ class NNTPProxyRequestHandler(SocketServer.StreamRequestHandler):
 					self.wfile.write("220 %d %s\r\n" % (articleno, msgid))
 					head = "\r\n".join([": ".join(item) for item in head.items()]) + "\r\n\r\n"
 					self.wfile.write(head)
-					self.wfile.write(body)
+					self.wfile.write(body.replace("\r\n.", "\r\n.."))
 					self.wfile.write(".\r\n")
 				elif data.startswith("HEAD"):
 					msgid = data.split(None, 1)[1]
@@ -107,7 +109,7 @@ class NNTPProxyRequestHandler(SocketServer.StreamRequestHandler):
 					msgid = data.split(None, 1)[1]
 					body = nntp_client.body(msgid)
 					self.wfile.write("222 %s\r\n" % (msgid))
-					self.wfile.write(body)
+					self.wfile.write(body.replace("\r\n.", "\r\n.."))
 					self.wfile.write(".\r\n")
 				elif data.startswith("LIST OVERVIEW.FMT"):
 					fmt = nntp_client.list_overview_fmt()

@@ -1,6 +1,6 @@
 <?php
-require_once(dirname(__FILE__)."/../../../www/config.php");
-require_once(WWW_DIR."lib/framework/db.php");
+require_once dirname(__FILE__) . '/../../../www/config.php';
+require_once nZEDb_LIB . 'framework/db.php';
 
 //	This script can dump all tables or just collections/binaries/parts/partrepair/groups.
 
@@ -11,7 +11,7 @@ if ($db->dbSystem() == "pgsql")
 $exportopts = "";
 $mysqlplatform = "";
 
-//determine mysql platform (oracle, percona, mariadb etc)
+//determine mysql platform (oracle, percona, mariadb etc) This doesn't work, so all show as generic
 if($db->dbSystem() == "mysql")
 {
 	$mysqlplatform = mysql_get_client_info();

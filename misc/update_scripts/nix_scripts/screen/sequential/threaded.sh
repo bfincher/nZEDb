@@ -3,18 +3,32 @@
 #	This is a simple sequential script the uses many of the threaded scripts
 #	Just set the variables and uncomment what you would like to run.
 
-export START_PATH="/var/www/nZEDb"
-export NZEDB_PATH="/var/www/nZEDb/misc/update_scripts"
-export TEST_PATH="/var/www/nZEDb/misc/testing/Release_scripts"
-export DEV_PATH="/var/www/nZEDb/misc/testing/Dev_testing"
-export DB_PATH="/var/www/nZEDb/misc/testing/DB_scripts"
-export THREADED_PATH="/var/www/nZEDb/misc/update_scripts/python_scripts"
+if [ -e "nZEDbBase.php" ]
+then
+	export NZEDB_ROOT="$(pwd)"
+elif [ -e "../../../nZEDbBase.php" ]
+then
+	export NZEDB_ROOT="$(php ../../../nZEDbBase.php)"
+elif [ -e "../../../../nZEDbBase.php" ]
+then
+	export NZEDB_ROOT="$(php ../../../../nZEDbBase.php)"
+else
+	export NZEDB_ROOT="$(php ../../../../../nZEDbBase.php)"
+fi
+
+export niceness=10
+export START_PATH="${NZEDB_ROOT}"
+export NZEDB_PATH="${NZEDB_ROOT}/misc/update_scripts"
+export TEST_PATH="${NZEDB_ROOT}/misc/testing/Release_scripts"
+export DEV_PATH="${NZEDB_ROOT}/misc/testing/Dev_testing"
+export DB_PATH="${NZEDB_ROOT}/misc/testing/DB_scripts"
+export THREADED_PATH="${NZEDB_ROOT}/misc/update_scripts/python_scripts"
 export NZEDB_SLEEP_TIME="60" # in seconds
 
-command -v php5 >/dev/null 2>&1 && export PHP=`command -v php5` || { export PHP=`command -v php`; }
-command -v python3 >/dev/null 2>&1 && export PYTHON=`command -v python3` || { export PYTHON=`command -v python`; }
-
-date1=`date +%s`
+command -v php5 >/dev/null 2>&1 && export PHPv=`command -v php5` || { export PHP=`command -v php`; }
+command -v python3 >/dev/null 2>&1 && export PYTHONv=`command -v python3` || { export PYTHON=`command -v python`; }
+export PHP="nice -n$niceness $PHPv"
+export PYTHON="nice -n$niceness $PYTHONv"
 
 #delete stale tmpunrar folders
 export count=`find $NZEDB_PATH/../../nzbfiles/tmpunrar -type d -print| wc -l`
@@ -40,9 +54,21 @@ do
 	clear
 	echo
 	echo
-#	tmux respawnp -k -t $tmux_session:2.0 "python ${THREADED_PATH}/nntpproxy.py ${THREADED_PATH}/lib/nntpproxy.conf"
-#	tmux respawnp -k -t$tmux_session:2.1 "python ${THREADED_PATH}/nntpproxy.py ${THREADED_PATH}/lib/nntpproxy_a.conf"
-#	sleep 5
+	if [[ $# -eq 1 && $1 == "true" ]]
+	then
+		loop=0
+	fi
+#	Uncomment this if statement only if using nntpproxy
+#	if [[ $loop -eq 1 ]]
+#	then
+#		tmux kill-session -t NNTPProxy
+#		$PHP ${NZEDB_PATH}/nntpproxy.php
+#		sleep 1
+#	else
+#		tmux respawnp -k -t $tmux_session:2.0 "python ${THREADED_PATH}/nntpproxy.py ${THREADED_PATH}/lib/nntpproxy.conf"
+		##Uncomment the next line only if you are using alternate nntp settings also
+#		tmux respawnp -k -t$tmux_session:2.1 "python ${THREADED_PATH}/nntpproxy.py ${THREADED_PATH}/lib/nntpproxy_a.conf"
+#	fi
 #	$PHP ${TEST_PATH}/removeCrapReleases.php true full size
 #	$PHP ${TEST_PATH}/removeCrapReleases.php true full scr
 #	$PHP ${TEST_PATH}/removeCrapReleases.php true full passwordurl
@@ -59,7 +85,7 @@ do
 #	$PHP ${NZEDB_PATH}/update_releases.php 1 false
 #	$PHP ${NZEDB_PATH}/decrypt_hashes.php full
 #	$PHP ${DEV_PATH}/renametopre.php 4
-#	$PYTHON -OOu ${THREADED_PATH}/testing_only/releases_threaded.py
+#	$PYTHON -OOu ${THREADED_PATH}/releases_threaded.py
 #	$PHP ${TEST_PATH}/fixReleaseNames.php 2 true all yes
 #	$PHP ${TEST_PATH}/fixReleaseNames.php 4 true all yes
 #	$PHP ${TEST_PATH}/fixReleaseNames.php 6 true all no
@@ -68,24 +94,20 @@ do
 #	$PYTHON -OOu ${THREADED_PATH}/requestid_threaded.py
 #	$PHP ${DB_PATH}/populate_nzb_guid.php limited
 #	$PHP ${DB_PATH}/populate_nzb_guid.php true
-#	$PHP ${DEV_PATH}/test_misc_sorter.php
 #	$PYTHON -OOu ${THREADED_PATH}/postprocess_threaded.py additional
 #	$PYTHON -OOu ${THREADED_PATH}/postprocess_threaded.py nfo
 #	$PYTHON -OOu ${THREADED_PATH}/fixreleasenames_threaded.py md5
 #	$PYTHON -OOu ${THREADED_PATH}/fixreleasenames_threaded.py nfo
 #	$PYTHON -OOu ${THREADED_PATH}/fixreleasenames_threaded.py filename
 #   $PYTHON -OOu ${THREADED_PATH}/fixreleasenames_threaded.py par2
+#   $PYTHON -OOu ${THREADED_PATH}/fixreleasenames_threaded.py miscsorter  ##I do not know if misc sorter works or ever worked with nZEDb, ugo has not been around in many months
 #	$PYTHON -OOu ${THREADED_PATH}/postprocess_threaded.py movie clean
 #	$PYTHON -OOu ${THREADED_PATH}/postprocess_threaded.py tv clean
 #	$PHP ${TEST_PATH}/fixReleaseNames.php 4 true all yes
 #	$PYTHON -OOu ${THREADED_PATH}/postprocess_old_threaded.py amazon
-	if [[ $# -eq 1 && $1 == "true" ]]
-	then
-		loop=0
-	fi
+#	$PHP ${NZEDB_PATH}/nix_scripts/tmux/bin/showsleep.php $NZEDB_SLEEP_TIME
 	date2=`date +%s`
 	diff=$(($date2-$date1))
 	echo "Total Running Time: $(($diff / 60)) minutes and $(($diff % 60)) seconds."
 	sleep 2
-#	sleep $NZEDB_SLEEP_TIME
 done

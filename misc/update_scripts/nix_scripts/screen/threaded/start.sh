@@ -1,9 +1,16 @@
 #!/bin/sh
 
-export NZEDB_PATH="/var/www/nZEDb/misc/update_scripts"
-export HELP_PATH="/var/www/nZEDb/misc/update_scripts/nix_scripts/screen/threaded"
-export THREAD_PATH="/var/www/nZEDb/misc/update_scripts/python_scripts"
-export TEST_PATH="/var/www/nZEDb/misc/testing/Release_scripts"
+if [ -e "nZEDbBase.php" ]
+then
+	export NZEDB_ROOT="$(pwd)"
+else
+	export NZEDB_ROOT="$(php ../../../../../nZEDbBase.php)"
+fi
+
+export NZEDB_PATH="${NZEDB_ROOT}/misc/update_scripts"
+export HELP_PATH="${NZEDB_ROOT}/misc/update_scripts/nix_scripts/screen/threaded"
+export THREAD_PATH="${NZEDB_ROOT}/misc/update_scripts/python_scripts"
+export TEST_PATH="${NZEDB_ROOT}/misc/testing/Release_scripts"
 
 command -v php5 >/dev/null 2>&1 && export PHP=`command -v php5` || { export PHP=`command -v php`; }
 command -v python3 >/dev/null 2>&1 && export PYTHON=`command -v python3` || { export PYTHON=`command -v python`; }
@@ -25,6 +32,9 @@ while :
 do
 	sleep 1
 	CURRTIME=`date +%s`
+	tmux kill-session -t NNTPProxy
+	$PHP ${NZEDB_PATH}/nntpproxy.php
+
 	cd ${NZEDB_PATH}
 	if ! $SCREEN -list | grep -q "POSTP"; then
 		cd $NZEDB_PATH && $SCREEN -dmS POSTP $SCREEN $PHP $NZEDB_PATH/postprocess.php allinf true
@@ -55,7 +65,7 @@ do
 	then
 		LASTOPTIMIZE1=`date +%s`
 		echo "Optimizing DB..."
-		$PHP ${NZEDB_PATH}/optimise_db.php
+		$PHP ${NZEDB_PATH}/optimise_db.php run
 	fi
 
 	DIFF=$(($CURRTIME-$LASTOPTIMIZE2))

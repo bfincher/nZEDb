@@ -1,11 +1,12 @@
 <?php
-require_once(WWW_DIR.'lib/framework/db.php');
-require_once(WWW_DIR.'lib/category.php');
-require_once(WWW_DIR.'lib/groups.php');
-require_once(WWW_DIR.'lib/nfo.php');
-require_once(WWW_DIR.'lib/namefixer.php');
-require_once(WWW_DIR.'lib/site.php');
-require_once(WWW_DIR.'lib/consoletools.php');
+require_once nZEDb_LIB . 'framework/db.php';
+require_once nZEDb_LIB . 'category.php';
+require_once nZEDb_LIB . 'groups.php';
+require_once nZEDb_LIB . 'nfo.php';
+require_once nZEDb_LIB . 'namefixer.php';
+require_once nZEDb_LIB . 'site.php';
+require_once nZEDb_LIB . 'consoletools.php';
+require_once nZEDb_LIB . 'ColorCLI.php';
 
 /*
  * Class for inserting names/categories/md5 etc from predb sources into the DB, also for matching names on files / subjects.
@@ -18,12 +19,13 @@ Class Predb
 		$s = new Sites();
 		$this->site = $s->get();
 		$this->echooutput = $echooutput;
-        $this->db = new DB();
+		$this->db = new DB();
+		$this->c = new ColorCLI;
 	}
 
 	// Retrieve pre info from predb sources and store them in the DB.
 	// Returns the quantity of new titles retrieved.
-	public function combinePre()
+	public function updatePre()
 	{
 		$db = $this->db;
 		$newnames = 0;
@@ -56,14 +58,19 @@ Class Predb
 			$newnames = $newwomble+$newomgwtf+$newzenet+$newprelist+$neworly+$newsrr+$newpdme;
 			if(count($newnames) > 0)
 				$db->queryExec(sprintf('UPDATE predb SET adddate = NOW() WHERE id = %d', $newestrel['id']));
+			return $newnames;
 		}
+	}
+
+	// Attempts to match predb to releases.
+	public function checkPre($nntp)
+	{
 		$matched = $this->matchPredb();
 		if ($matched > 0 && $this->echooutput)
 			echo 'Matched '.$matched." predDB titles to release search names.\n";
-		$nfos = $this->matchNfo();
+		$nfos = $this->matchNfo($nntp);
 		if ($nfos > 0 && $this->echooutput)
 			echo "\nAdded ".$nfos." missing NFOs from preDB sources.\n";
-		return $newnames;
 	}
 
 	public function retrieveWomble()
@@ -387,7 +394,7 @@ Class Predb
 		$consoletools = new ConsoleTools();
 		$updated = 0;
 		if($this->echooutput)
-			echo 'Querying DB for matches in preDB titles with release searchnames.';
+			echo $this->c->header('Querying DB for matches in preDB titles with release searchnames.');
 
 		$res = $db->prepare('SELECT p.id AS preid, r.id AS releaseid FROM predb p INNER JOIN releases r ON p.title = r.searchname WHERE r.preid IS NULL');
 		$res->execute();
@@ -407,8 +414,11 @@ Class Predb
 	}
 
 	// Look if the release is missing an nfo.
-	public function matchNfo()
+	public function matchNfo($nntp)
 	{
+		if (!isset($nntp))
+			exit($this->c->error("Not connected to usenet(binaries->updateAllGroups).\n"));
+
 		$db = new DB();
 		$nfos = 0;
 		if($this->echooutput)
@@ -426,7 +436,7 @@ Class Predb
 				$buffer = getUrl($row['nfo']);
 				if ($buffer !== false)
 				{
-					if($nfo->addAlternateNfo($db, $buffer, $row))
+					if($nfo->addAlternateNfo($db, $buffer, $row, $nntp))
 					{
 						if($this->echooutput)
 							echo '+';

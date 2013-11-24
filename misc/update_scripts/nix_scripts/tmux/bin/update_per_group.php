@@ -1,18 +1,25 @@
 <?php
-require_once(dirname(__FILE__)."/../../../config.php");
-require_once(WWW_DIR."lib/framework/db.php");
-require_once(WWW_DIR."lib/releases.php");
-require_once(WWW_DIR."lib/groups.php");
-require_once(WWW_DIR."lib/consoletools.php");
-require_once(WWW_DIR."lib/binaries.php");
-require_once(WWW_DIR."lib/backfill.php");
-require_once(WWW_DIR."lib/postprocess.php");
-require_once(WWW_DIR.'lib/nfo.php');
+require_once dirname(__FILE__) . '/../../../config.php';
+require_once nZEDb_LIB . 'framework/db.php';
+require_once nZEDb_LIB . 'releases.php';
+require_once nZEDb_LIB . 'groups.php';
+require_once nZEDb_LIB . 'consoletools.php';
+require_once nZEDb_LIB . 'binaries.php';
+require_once nZEDb_LIB . 'backfill.php';
+require_once nZEDb_LIB . 'postprocess.php';
+require_once nZEDb_LIB . 'nfo.php';
+require_once nZEDb_LIB . 'nntp.php';
+require_once nZEDb_LIB . 'ColorCLI.php';
+require_once nZEDb_LIB . 'site.php';
 
-$pieces = explode("  ", $argv[1]);
+$c = new ColorCLI;
+if (!isset($argv[1]))
+	exit($c->error("This script is not intended to be run manually, it is called from update_threaded.py."));
+
+$s = new Sites();
+$site = $s->get();
+$pieces = explode('  ', $argv[1]);
 $groupid = $pieces[0];
-//sleep($pieces[1]*2);
-
 $releases = new Releases(true);
 $groups = new Groups();
 $groupname = $groups->getByNameByID($groupid);
@@ -22,26 +29,28 @@ $binaries = new Binaries();
 $backfill = new Backfill();
 $db = new DB();
 
+// Create the connection here and pass, this is for post processing, so check for alternate
+$nntp = new Nntp();
+if (($site->alternate_nntp == 1 ? $nntp->doConnect_A() : $nntp->doConnect()) === false)
+	exit($c->error("Unable to connect to usenet."));
+if ($site->nntpproxy === "1")
+	usleep(500000);
 
 if ($releases->hashcheck == 0)
-	exit("You must run update_binaries.php to update your collectionhash.\n");
+	exit($c->error("You must run update_binaries.php to update your collectionhash."));
 
-if ($pieces[0] != "Stage7b")
+if ($pieces[0] != 'Stage7b')
 {
 	// Update Binaries per group
-	$binaries->updateGroup($group, null);
+	$binaries->updateGroup($group, $nntp);
 
 	// Backfill per group
-	$backfill->backfillPostAllGroups($groupname, 20000, "normal");
+	$backfill->backfillPostAllGroups($groupname, 20000, 'normal', $nntp);
 
 	// Update Releases per group
 	try {
 		$test = $db->prepare('SELECT * FROM '.$pieces[0].'_collections');
 		$test->execute();
-		$test1 = $db->prepare('SELECT * FROM '.$pieces[0].'_collections');
-		$test1->execute();
-		$test2 = $db->prepare('SELECT * FROM '.$pieces[0].'_collections');
-		$test2->execute();
 		// Don't even process the group if no collections
 		if ($test->rowCount() == 0)
 		{
@@ -68,15 +77,18 @@ if ($pieces[0] != "Stage7b")
 //		printf($mask, str_replace('alt.binaries', 'a.b', $groupname), $first);
 
 	$postprocess = new PostProcess(true);
-	$postprocess->processAdditional(null, null, null, $groupid);
+	$postprocess->processAdditional(null, null, null, $groupid, $nntp);
 	$nfopostprocess = new Nfo(true);
-	$nfopostprocess->processNfoFiles(null, null, null, $groupid);
+	$nfopostprocess->processNfoFiles(null, null, null, $groupid, $nntp);
+	if ($site->nntpproxy != "1")
+		$nntp->doQuit();
 }
-elseif ($pieces[0] == "Stage7b")
+elseif ($pieces[0] == 'Stage7b')
 {
 	// Runs functions that run on releases table after all others completed
 	$releases->processReleasesStage4dot5($groupid='', true);
 	$releases->processReleasesStage6($categorize=1, $postproc=0, $groupid='', true);
 	$releases->processReleasesStage7b($groupid='', true);
-	//echo "Deleted ".number_format($deleted)." collections/binaries/parts.\n";
+	//echo 'Deleted '.number_format($deleted)." collections/binaries/parts.\n";
 }
+?>
