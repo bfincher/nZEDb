@@ -26,7 +26,7 @@ function SplitSQL($file, $delimiter = ';')
 			$query = array();
 			$db = new DB();
 			$dbsys = $db->dbSystem();
-            $c = new ColorCLI();
+			$c = new ColorCLI();
 
 			while (feof($file) === false)
 			{
@@ -46,15 +46,22 @@ function SplitSQL($file, $delimiter = ';')
 							echo $c->error($e->errorInfo[2]." - Not Fatal.\n");
 						else if ($e->errorInfo[1] == 1060)
 							echo $c->error($e->errorInfo[2]." - Not Fatal.\n");
+						else if ($e->errorInfo[1] == 1054)
+							echo $c->error($e->errorInfo[2]." - Not Fatal.\n");
 						else if ($e->errorInfo[1] == 1061)
 							echo $c->error($e->errorInfo[2]." - Not Fatal.\n");
 						else if ($e->errorInfo[1] == 1062)
 							echo $c->error($e->errorInfo[2]." - Not Fatal.\n");
 						else if ($e->errorInfo[1] == 1071)
 							echo $c->error($e->errorInfo[2]." - Assuming MyIsam, Not Fatal.\n");
+						else if ($e->errorInfo[1] == 1072)
+							echo $c->error($e->errorInfo[2]." - Not Fatal.\n");
+						// PGSQL Error Codse
+						else if ($e->errorInfo[0] == 23505 || $e->errorInfo[0] == 42701 || $e->errorInfo[0] == 42703 || $e->errorInfo[0] == '42P07')
+							echo $c->error($e->errorInfo[2]." - Not Fatal.\n");
 						else
 						{
-							echo $e;
+							echo $e."\n";
 							exit($c->error($query." Failed\n"));
 						}
 					}
@@ -81,7 +88,7 @@ function SplitSQL($file, $delimiter = ';')
 function BackupDatabase()
 {
 	$db = new DB();
-    $c = new ColorCLI();
+	$c = new ColorCLI();
 	$returnvar = NULL;
 	$output = NULL;
 	$DIR = nZEDb_MISC;

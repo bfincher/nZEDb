@@ -29,12 +29,12 @@ function create_guids($live, $delete = false)
 
 	if ($live == "true")
 	{
-		$relrecs = $db->prepare(sprintf("SELECT id, guid FROM releases WHERE nzb_guid IS NULL AND nzbstatus = 1 ORDER BY id DESC"));
+		$relrecs = $db->prepare(sprintf("SELECT id, guid FROM releases WHERE nzb_guid IS NULL AND (bitwise & 256) = 256 ORDER BY id DESC"));
 		$relrecs->execute();
 	}
-	elseif ($live == "limited")
+	else if ($live == "limited")
 	{
-		$relrecs = $db->prepare(sprintf("SELECT id, guid FROM releases WHERE nzb_guid IS NULL AND nzbstatus = 1 ORDER BY id DESC LIMIT 10000"));
+		$relrecs = $db->prepare(sprintf("SELECT id, guid FROM releases WHERE nzb_guid IS NULL AND (bitwise & 256) = 256 ORDER BY id DESC LIMIT 10000"));
 		$relrecs->execute();
 	}
 	$total = $relrecs->rowCount();
@@ -55,7 +55,7 @@ function create_guids($live, $delete = false)
 				{
 					if (isset($delete) && $delete == 'delete')
 					{
-						echo $nzb->NZBPath($relrec['guid'])." is not a valid xml, deleting release.\n";
+						echo "\n".$nzb->NZBPath($relrec['guid'])." is not a valid xml, deleting release.\n";
 						$releases->fastDelete($relrec['id'], $relrec['guid'], $site);
 					}
 					continue;
@@ -69,7 +69,7 @@ function create_guids($live, $delete = false)
 				{
 					if (isset($delete) && $delete == 'delete')
 					{
-						echo $nzb->NZBPath($relrec['guid'])." has no binaries, deleting release.\n";
+						echo "\n".$nzb->NZBPath($relrec['guid'])." has no binaries, deleting release.\n";
 						$releases->fastDelete($relrec['id'], $relrec['guid'], $site);
 					}
 					continue;
@@ -95,7 +95,7 @@ function create_guids($live, $delete = false)
 			{
 				if (isset($delete) && $delete == 'delete')
 				{
-					echo $nzb->$relrec['guid']." does not have an nzb, deleting.\n";
+					echo "\n".$nzb->NZBPath($relrec['guid'])." does not have an nzb, deleting.\n";
 					$releases->fastDelete($relrec['id'], $relrec['guid'], $site);
 				}
 			}
