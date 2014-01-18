@@ -3,16 +3,107 @@ No pull requests will be accepted without this file being updated to reflect wha
 No pull requests will be accepted to any branch except the dev branch.
 Each update goes to the top of the file
 
+
+2014-01-06 -> bart39   -> fixed issue with categorizing by group while adding releases
+2014-01-06 -> jonnyboy -> fixed missings references in themes, fixed typo in site-edit, added patch to remove null from categoryid
+                          fixed bug in pp additional where 'sh: Permission denied' when mediainfo path not set
+                          added fix_autoinc.php to fix "unable to find the AUTOINC column id"
+                          fixed dump_predb.php to use local groupid, dump not updated for this yet
+2014-01-05 -> jonnyboy -> fixed bug in namecleaning.php
+                          fixed renametopre.php to also use internal regexes, fixed porn categorization
+                          changed groups->reset to not disable group, removed porn from movie lookup, added reset searhname = name when searchname is single digit or letter,
+                          updated Release_scripts/* to use color and added usage where there was none
+2014-01-04 -> jonnyboy -> requestid.php, added optional final argument to reprocess releases posted newer than x min, changed output to not count releases whose name did not change
+2014-01-04 -> bart39   -> More regex additions/fixes
+2014-01-03 -> Roelski  -> Fixed check in populate_anidb.php if anidb already had id. Changed some text.
+2014-01-03 -> jonnyboy -> fixed group add and bulk group add, changed output of pp addtional when fail to show which piece(attemp) it failed on
+2014-01-02 -> Roelski     Changed double screen in threaded screen script. Added threaded backfill to script.
+2014-01-01 -> jonnyboy -> fix for sendtosab ssl/Hoochster
+                          improved local lookup for tv/movies
+2013-12-31 -> jonnyboy -> VERY IMPORTANT PATCH - IF YOU RAN misc/testing/DB_scripts/rename_to_lower.php, THEN YOU MUST STOP ALL SCRIPTS AND RUN AGAIN, NOW
+                          PLEASE MESSAGE ME IN IRC IF YOU RAN THIS SCRIPT
+                          changed posted/added date to date time in nzb view, fixed output of updateMovieInfo.php to display correct count
+                          updated resetRelnameStatus.php to allow resetting of rename bits only
+2013-12-30 -> jonnyboy -> added scrollbar and fixed count on movies->cover view in light theme, moved style to css
+                          added more info Rotten Tomotoes, Theater link in light theme
+                          fixed newposterwall to center the row of images and use the whole row
+                          fixed typo in util.php not showing country flag, changed buttons in light/search, changed newposterwall, to show only releases with covers
+                          fixed query in getMovieRange() to only return movies with covers since it is for cover view, removed bad formed query
+                          renamed jonnyboy theme to light
+                          fixed commit.sh to update monitor.php commit version
+                          fixed bug in theme/admin pages using incorrect path for scripts
+                          removed SQL_CALC_FOUND_ROWS from query for predb row count
+2013-12-29 -> jonnyboy -> added option to enable/disable movie backgrounds in theme
+                          updated site-edit comments for os/mysql changes necessary for TPG
+2013-12-29 -> niel     -> fixing sql patch version in tmux start.php
+2013-12-29 -> jonnyboy -> added rename_to_lower.php to rename all table columns to lowercase, removed useless patch
+                          fixed incorrect usage of counter, fixed incorrect usage of var
+                          added patch to rename all tables/columns to lower case
+2013-12-28 -> jonnyboy -> added rottentomatoes image quality selection to site-edit, changes the image quality when select theater
+                          fixed rottentomatoes lookup, changed image to high resolution
+                          fixed release-edit for imdbid and anidbid
+                          added farnart.tv lookup for movie covers and backgrounds, you need an api key from fanart.tv to use it
+2013-12-27 -> jonnyboy -> added background image to movie cover view, still need to get the alpha value and hover settings correct
+                          fixed new user add during install, added first/last name to user-edit
+                          added find_new_groups.php
+                          added 2 column display in jonnyboy->movies, needs some tweaks to pager and multi select
+2013-12-26 -> jonnyboy -> added tooltip release info to wall
+                          added patch to add menuitem for newposterwall
+                          added imdb to newposterwall
+                          added css for newposterwall for current themes
+                          fixed add user and register, including optional real first/last names
+                          fixed IMDB lookup, changed sleep timers for tmdb/imdb update scripts, added updateTvRage.php
+                          reverted change to use relative url, added missing files to theme
+2013-12-24 -> jonnyboy -> reverted function signup to before adding user real name, temp fix, until its added to the register page
+                          reverted all changes to themes other than jonnyboy, cleaned up jonnyboy theme
+2013-12-23 -> bart39   -> More regex additions/fixes for movie/audio/books/tv
+                          fixed adding/updating tvrage data
+2013-12-23 -> jonnyboy -> reset exec bit for bash scripts
+                          changed query for movie image view
+                          updated jonnyboy theme, updated postprocess_threaded.py to also use parent categoryid
+                          most commit changes are due to Netbeans making permission changes
+2013-12-22 -> bart39   -> More regex additions/fixes for movie/audio/books/tv
+2013-12-22 -> jonnyboy -> added utf8 to tmux.conf
+                          removed anime and tvrage prepopulate data from schemas
+                          added local lookup for books, music and console(may be buggy), added easier to read output for books, music and console
+                          changed sleep timer for amazon, so that each amazon lookup only takes 1 sec, does not sleep if local or lookup exceeded 1 sec
+                          fixed monitor running on/off
+2013-12-21 -> bart39   -> More regex additions/fixes for movie/audio
+2013-12-21 -> jonnyboy -> updated movie.php to get movie backdrops
+                          changed site to use relative urls for all menu items, instead of a mix of relative and full urls
+                          added option to run postprocess_threaded.py on categroyid, changed monitor to use ColorCLI, changing brackets, changed output of pp amazon scripts
+2013-12-21 -> egandt   -> Fixes to Anime display and reading for new table structure
+2013-12-20 -> ThePeePs -> Added First/Last names for users
+                          Fixed email function in util.php
+                          Fixed formating for password reset and invite emails.
+                          Invite emails will show inviting user's "real name" if set instead of username.
+                          Fixed "reset password" link in alpha theme.
+2013-12-20 -> bart39   -> More regex additions/fixes mainly warez groups
+2013-12-19 -> jonnyboy -> possible fix to postdate
+2013-12-19 -> bart39   -> Additional book regexes added to namecleaning
+2013-12-18 -> jonnyboy -> fixed bug in category.php not getting audiobooks into correct cat, added regexes for another movie group
+2013-12-17 -> jonnyboy -> added option to not display renaming in requestid.php, added abgx to predb, not much there
+2013-12-17 -> bart39   -> Additional regexes added to namecleaning
+2013-12-16 -> niel     -> Adding misc/testing/DB_scripts/setUserPasswordHash.php to allow resetting of passwords to current method.
+                          Changing password hashing method to make them more secure. crypt() uses the best algorithm your system has available.
+                          YOU WILL NEED TO RESET YOUR PASSWORD.
+                          Removing now unnecessary 'siteseed' setting from site table.
+                          Updating the convert from newznab script to accommodate these changes.
+2013-12-16 -> jonnyboy -> added requestid.php for local lookup, is faster than using python script for local and is recommended
+                          added script to import/export predb dump to allow for insert and update
+                          merged unmerged pull requests for TMDB.php
+2013-12-14 -> jonnyboy -> attempt to fix is null error in stage, releases.php, added OMDb API lookup as first lookup for imdb id
+2013-12-13 -> niel     -> Moved initializing of DB::$c so that it is available if initializing the pdo object fails.
 2013-12-13 -> jonnyboy -> added additional output to postprocessing additional, fixed a couple of predb bugs
 2013-12-08 -> jonnyboy -> added added lookups to requestid lookup, fixed bug in tmux not counting/processing amazon since added clean option
 2013-12-08 -> jonnyboy -> added requestid lookup to current predb, fixed zenet
 2013-12-07 -> jonnyboy -> added scripts for downloading headers to file and parse headers with current regexes
                           removed threads for pp amazon, added clean option for anidb, book, console and music pp, fixed patches
-2012-12-07 -> egandt   -> added new parmeter to sites table (optional) modified through sites->edit screen to select which book categories to lookup on Amazon.
+2012-12-07 -> egandt   -> added new parameter to sites table (optional) modified through sites->edit screen to select which book categories to lookup on Amazon.
 2013-12-06 -> jonnyboy -> updated tmux for pgsql - working, fixed bug in monitor - pane not found, update_releases.php still not working with pgsql
 2013-12-05 -> niel     -> Changing anidb table. Dropping id column (not needed as anidbid is numeric and unique) adding imdbid and tvdbid columns
 2013-12-05 -> jonnyboy -> change table names for tpg
-2013-12-04 -> jonnyboy -> updated and verfied pgsql schema and all patches.
+2013-12-04 -> jonnyboy -> updated and verified pgsql schema and all patches.
 2013-12-03 -> jonnyboy -> removed incomplete patch, added color to more scripts, added functions to consoletools for overwrite color, added ability to reset specific bits using resetRelnameStatus.php,
                           added option to import x number nzbs, then exit
 2013-12-02 -> jonnyboy -> moved releases.hashed and releases.request to bitwise, changed bitwise to smallint unsigned, fixed bug in db.php, moved hdtv and bdrip to hd, if searchname contains part# but not s/e numbers,
@@ -201,7 +292,7 @@ Each update goes to the top of the file
                           added option for alternate sequential run in tmux
 2013-08-21 -> kevin    -> Add memcache support. Add the following under define('NNTP_SSLENABLED_A', false); in your config.php. Set to true to enable. (for ubuntu -> sudo apt-get install memcached php5-memcache)
 
-                          // Wether to use memcached or not.
+                          // Whether to use memcached or not.
                           define('MEMCACHE_ENABLED', false);
                           define('MEMCACHE_HOST', '127.0.0.1');
                           define('MEMCACHE_PORT', '11211');
@@ -219,7 +310,7 @@ Each update goes to the top of the file
 2013-08-15 -> ThePeePs -> Site stats for alpha theme.
 2013-08-15 -> Josh     -> Update themes.
 2013-08-12 -> bodrick  -> Fixed bug with namefixer, if print changes only, status was still being set to updated.
-2013-08-12 -> kevin    -> Catgorize S01E01E02 / S01E01A properly, clean up more files.
+2013-08-12 -> kevin    -> Categorize S01E01E02 / S01E01A properly, clean up more files.
 2013-08-11 -> kevin    -> Clean up/fix bugs in a bunch of files in www/lib
 2013-08-10 -> kevin    -> Clean up postprocess.php
 2013-08-09 -> kevin    -> More regex in namecleaning.
@@ -265,7 +356,7 @@ Each update goes to the top of the file
                           fixed typo in namecleaning.php
 2013-07-15 -> jonnyboy -> replaced external decrypt hashes script with internal one
                           added preg_replace to grabnzbs and nzb-import to remove part number from end of subject
-2013-07-15 -> kevin    -> update namecleaning     Added some regex to name cleaning.
+2013-07-15 -> kevin    -> update namecleaning, Added some regex to name cleaning.
                           Make sure that yEnc is before part count in binaries.php (some High Compressed virus posts were getting through).
 2013-07-14 -> jonnyboy -> reverted last
                           changed default user view to list view

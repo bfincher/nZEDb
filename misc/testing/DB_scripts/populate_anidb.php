@@ -108,7 +108,7 @@ class AniDBstandAlone
 			else
 			{
 				if ($this->echooutput)
-					echo 'AnimeTitle Record '.$anidbid." is not present in anidb table yet, processing for possible removal.\n";
+					echo 'AnimeTitle Record '.$anidbid." is already present in anidb table, processing for possible removal.\n";
 
 				$AniDBAPIArrayOld['AnimeInProgress'] = false;
 
@@ -157,9 +157,9 @@ class AniDBstandAlone
 		{
 			$anidbid = (int)$value['anidbid'];
 
-			$exists = $db->query(sprintf('SELECT COUNT(*) FROM `anidb` WHERE `anidbid` = %d', $anidbid));
+			$exists = $db->queryOneRow(sprintf('SELECT COUNT(*) as num FROM `anidb` WHERE `anidbid` = %d', $anidbid));
 
-			if ( (int)$exists['0'][0] == 0 )
+			if ( (int)$exists['num'] == 0 )
 			{
 				if ($this->echooutput)
 					echo 'Adding AniDB ID '.$anidbid."\n";
@@ -273,8 +273,8 @@ Holding on to this in case we want it again as it has some uses, but currently w
 		if ($this->echooutput)
 			echo sprintf("INSERT INTO anidb VALUES ('', %d, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %d)", $AniDBAPIArray['anidbid'], $db->escapeString($AniDBAPIArray['title']), $db->escapeString($AniDBAPIArray['type']), $db->escapeString($AniDBAPIArray['startdate']), $db->escapeString($AniDBAPIArray['enddate']), $db->escapeString($AniDBAPIArray['related']), $db->escapeString($AniDBAPIArray['creators']), $db->escapeString($AniDBAPIArray['description']), $db->escapeString($AniDBAPIArray['rating']), $db->escapeString($AniDBAPIArray['picture']), $db->escapeString($AniDBAPIArray['categories']), $db->escapeString($AniDBAPIArray['characters']), $db->escapeString($AniDBAPIArray['epnos']), $db->escapeString($AniDBAPIArray['airdates']), $db->escapeString($AniDBAPIArray['episodetitles']), time());
 */
-
-		$db->queryInsert(sprintf("INSERT INTO anidb VALUES ('', %d, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %d)", $AniDBAPIArray['anidbid'], $db->escapeString($AniDBAPIArray['title']), $db->escapeString($AniDBAPIArray['type']), $db->escapeString($AniDBAPIArray['startdate']), $db->escapeString($AniDBAPIArray['enddate']), $db->escapeString($AniDBAPIArray['related']), $db->escapeString($AniDBAPIArray['creators']), $db->escapeString($AniDBAPIArray['description']), $db->escapeString($AniDBAPIArray['rating']), $db->escapeString($AniDBAPIArray['picture']), $db->escapeString($AniDBAPIArray['categories']), $db->escapeString($AniDBAPIArray['characters']), $db->escapeString($AniDBAPIArray['epnos']), $db->escapeString($AniDBAPIArray['airdates']), $db->escapeString($AniDBAPIArray['episodetitles']), time()));
+		// ad missing imdb and tvid id's remove the old id column
+		$db->queryInsert(sprintf("INSERT INTO anidb VALUES (%d, 0, 0, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %d)", $AniDBAPIArray['anidbid'], $db->escapeString($AniDBAPIArray['title']), $db->escapeString($AniDBAPIArray['type']), $db->escapeString($AniDBAPIArray['startdate']), $db->escapeString($AniDBAPIArray['enddate']), $db->escapeString($AniDBAPIArray['related']), $db->escapeString($AniDBAPIArray['creators']), $db->escapeString($AniDBAPIArray['description']), $db->escapeString($AniDBAPIArray['rating']), $db->escapeString($AniDBAPIArray['picture']), $db->escapeString($AniDBAPIArray['categories']), $db->escapeString($AniDBAPIArray['characters']), $db->escapeString($AniDBAPIArray['epnos']), $db->escapeString($AniDBAPIArray['airdates']), $db->escapeString($AniDBAPIArray['episodetitles']), time()));
 	}
 
 
