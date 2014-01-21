@@ -40,7 +40,7 @@ PID=$$
 echo "PID = " $PID
 echo $PID > ${PIDFILE}
 
-export NEWZNAB_PATH="$BASEDIR/misc/update_scripts"
+export NEWZNAB_PATH="$BASEDIR/misc/update"
 export TESTING_PATH="$BASEDIR/misc/testing"
 export NEWZNAB_BINUP="update_binaries.php"
 export NEWZNAB_RELUP="update_releases.php 1 false"
@@ -69,7 +69,7 @@ php ${NEWZNAB_BINUP} >> $BIN_LOG 2>&1
 php ${NEWZNAB_RELUP} >> $REL_LOG 2>&1
 php decrypt_hashes.php >> $LOG_DIR/update.log 2>&1
 
-cd ${TESTING_PATH}/Release_scripts
+cd ${TESTING_PATH}/Release
 php fixReleaseNames.php 3 true all yes >> $LOG_DIR/update.log 2>&1
 php fixReleaseNames.php 1 true all yes >> $LOG_DIR/update.log 2>&1
 php removeCrapReleases.php true 6 >> $LOG_DIR/update.log 2>&1
