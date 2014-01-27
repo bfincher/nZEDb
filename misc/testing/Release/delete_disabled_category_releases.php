@@ -7,10 +7,10 @@ require_once nZEDb_LIB . 'ColorCLI.php';
 $c = new ColorCLI();
 
 if (isset($argv[1]) && $argv[1] == "true") {
-	require_once nZEDb_LIB . 'framework/db.php';
-	require_once nZEDb_LIB . 'category.php';
-	require_once nZEDb_LIB . 'releases.php';
-	require_once nZEDb_LIB . 'site.php';
+	#require_once nZEDb_LIB . 'framework/DB.php';
+	#equire_once nZEDb_LIB . 'Category.php';
+	#equire_once nZEDb_LIB . 'Releases.php';
+	#require_once nZEDb_LIB . 'site.php';
 
 	$timestart = TIME();
 	$s = new Sites();
