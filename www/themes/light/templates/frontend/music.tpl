@@ -114,11 +114,11 @@
 
                             <div class="movextra">
                                 {if $result.nfoid > 0}<a href="{$smarty.const.WWW_TOP}/nfo/{$result.guid}"
-                                                         title="View Nfo" class="rndbtn modal_nfo" rel="nfo">
+                                                         title="View Nfo" class="rndbtnsml modal_nfo" rel="nfo">
                                         Nfo</a>{/if}
-                                <a class="rndbtn" target="_blank" href="{$site->dereferrer_link}{$result.url}"
+                                <a class="rndbtnsml" target="_blank" href="{$site->dereferrer_link}{$result.url}"
                                    name="amazon{$result.musicinfoid}" title="View amazon page">Amazon</a>
-                                <a class="rndbtn" href="{$smarty.const.WWW_TOP}/browse?g={$result.group_name}"
+                                <a class="rndbtnsml" href="{$smarty.const.WWW_TOP}/browse?g={$result.group_name}"
                                    title="Browse releases in {$result.group_name|replace:"alt.binaries":"a.b"}">Grp</a>
                             </div>
                         </div>
