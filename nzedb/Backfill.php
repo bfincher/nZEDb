@@ -2,595 +2,876 @@
 
 class Backfill
 {
+	/**
+	 * Instance of class ColorCLI.
+	 *
+	 * @var object
+	 */
+	private $c;
 
-	public function __construct($site = null)
+	/**
+	 * Should we use compression for headers?
+	 *
+	 * @var bool
+	 */
+	private $compressedHeaders;
+
+	/**
+	 * Instance of class DB
+	 *
+	 * @var object
+	 */
+	private $db;
+
+	/**
+	 * Instance of class debugging.
+	 *
+	 * @var object
+	 */
+	private $debugging;
+
+	/**
+	 * Do we need to reset the collection hashes?
+	 *
+	 * @var int
+	 */
+	private $hashcheck;
+
+	/**
+	 * Are we using nntpproxy?
+	 *
+	 * @var int
+	 */
+	private $nntpproxy;
+
+	/**
+	 * How far back should we go on safebackfill?
+	 *
+	 * @var string
+	 */
+	private $safebdate;
+
+	/**
+	 * @var int
+	 */
+	private $safepartrepair;
+
+	/**
+	 * Should we use tpg?
+	 *
+	 * @var int
+	 */
+	private $tablepergroup;
+
+	/**
+	 * Echo to cli?
+	 * @var bool
+	 */
+	protected $echo;
+
+	/**
+	 * Log and or echo debug.
+	 * @var bool
+	 */
+	protected $debug = false;
+
+	/**
+	 * @var NNTP
+	 */
+	protected $nntp;
+
+	/**
+	 * @var Binaries
+	 */
+	protected $binaries;
+
+	/**
+	 * @var int
+	 */
+	protected $startGroup;
+
+	/**
+	 * @var Groups
+	 */
+	protected $groups;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param NNTP $nntp Class instance of NNTP.
+	 * @param bool $echo Echo to cli?
+	 */
+	public function __construct($nntp = null, $echo = true)
 	{
-		if (!isset($site)) {
-			$s = new Sites();
-			$site = $s->get();
-		}
-		$this->safebdate = (!empty($site->safebackfilldate)) ? $site->safebackfilldate : 2012 - 06 - 24;
-		$this->hashcheck = (!empty($site->hashcheck)) ? $site->hashcheck : 0;
-		$this->compressedHeaders = ($site->compressedheaders == '1') ? true : false;
-		$this->nntpproxy = (isset($site->nntpproxy)) ? $site->nntpproxy : 0;
-		$this->tablepergroup = (isset($site->tablepergroup)) ? $site->tablepergroup : 0;
+		$this->nntp = $nntp;
+		$this->echo = ($echo && nZEDb_ECHOCLI);
 		$this->c = new ColorCLI();
+		$this->db = new DB();
+		$this->groups = new Groups($this->db);
+		$this->debug = (nZEDb_LOGGING || nZEDb_DEBUG);
+		if ($this->debug) {
+			$this->debugging = new Debugging("Backfill");
+		}
+
+		$s = new Sites();
+		$site = $s->get();
+
+		$this->compressedHeaders = ($site->compressedheaders == '1') ? true : false;
+		$this->hashcheck = (!empty($site->hashcheck)) ? (int)$site->hashcheck : 0;
+		$this->nntpproxy = (isset($site->nntpproxy)) ? (int)$site->nntpproxy : 0;
+		$this->safebdate = (!empty($site->safebackfilldate)) ? $site->safebackfilldate : '2012 - 06 - 24';
+		$this->safepartrepair = (!empty($site->safepartrepair)) ? (int)$site->safepartrepair : 0;
+		$this->tablepergroup = (isset($site->tablepergroup)) ? (int)$site->tablepergroup : 0;
+
+		// Deprecated?
 		$this->primary = 'Green';
 		$this->warning = 'Red';
 		$this->header = 'Yellow';
-		$this->safepartrepair = (!empty($site->safepartrepair)) ? $site->safepartrepair : 0;
-		$this->db = new DB();
 	}
 
-	// Backfill groups using user specified time/date.
-	public function backfillAllGroups($nntp, $groupName = '')
+	/**
+	 * Backfill all the groups up to user specified time/date.
+	 *
+	 * @param string $groupName
+	 * @param string|int $articles
+	 * @param string $type
+	 *
+	 * @return void
+	 */
+	public function backfillAllGroups($groupName = '', $articles ='', $type = '')
 	{
-		if (!isset($nntp)) {
-			exit($this->c->error("Not connected to usenet(backfill->backfillAllGroups).\n"));
+		if ($this->hashcheck === 0) {
+			$dMessage = "You must run update_binaries.php to update your collectionhash.";
+			if ($this->debug) {
+				$this->debugging->start("backfillAllGroups", $dMessage, 1);
+			}
+			exit($this->c->error($dMessage));
 		}
 
-		if ($this->hashcheck == 0) {
-			exit($this->c->error("You must run update_binaries.php to update your collectionhash."));
-		}
-		$groups = new Groups();
-
-		if ($groupName != '') {
-			$grp = $groups->getByName($groupName);
+		$res = array();
+		if ($groupName !== '') {
+			$grp = $this->groups->getByName($groupName);
 			if ($grp) {
 				$res = array($grp);
 			}
 		} else {
-			$res = $groups->getActiveBackfill();
+			if ($type === 'normal' || $type === '') {
+				$res = $this->groups->getActiveBackfill();
+			} else if ($type === 'date') {
+				$res = $this->groups->getActiveByDateBackfill();
+			}
 		}
 
-
-		if ($res) {
+		$groupCount = count($res);
+		if ($groupCount > 0) {
 			$counter = 1;
-			$db = $this->db;
-			$binaries = new Binaries();
+			$allTime = microtime(true);
+			$dMessage = "Backfilling: " . $groupCount . ' group(s) - Using compression? ' . (($this->compressedHeaders) ? 'Yes' : 'No');
+			if ($this->debug) {
+				$this->debugging->start("backfillAllGroups", $dMessage, 5);
+			}
+
+			if ($this->echo) {
+				$this->c->doEcho($this->c->header($dMessage), true);
+			}
+
+			$this->binaries = new Binaries($this->nntp, $this->echo, $this);
+
+			if ($articles !== '') {
+				if (!is_numeric($articles)) {
+					$articles = 20000;
+				} else {
+					$articles = (int) $articles;
+				}
+			}
+
+			// Loop through groups.
 			foreach ($res as $groupArr) {
 				if ($groupName === '') {
-					echo $this->c->set256($this->header) . "\nStarting group " . $counter . ' of ' . sizeof($res) . ".\n" . $this->c->rsetColor();
+					$dMessage = "Starting group " . $counter . ' of ' . $groupCount;
+					if ($this->debug) {
+						$this->debugging->start("backfillAllGroups", $dMessage, 5);
+					}
+
+					if ($this->echo) {
+						$this->c->doEcho($this->c->header($dMessage), true);
+					}
 				}
-				$this->backfillGroup($nntp, $db, $binaries, $groupArr, sizeof($res) - $counter);
+				$this->backfillGroup($groupArr, $groupCount - $counter, $articles);
 				$counter++;
 			}
+
+			$dMessage = 'Backfilling completed in ' . number_format(microtime(true) - $allTime, 2) . " seconds.";
+			if ($this->debug) {
+				$this->debugging->start("backfillAllGroups", $dMessage, 5);
+			}
+
+			if ($this->echo) {
+				$this->c->doEcho($this->c->primary($dMessage));
+			}
 		} else {
-			echo $this->c->set256($this->primary) . "No groups specified. Ensure groups are added to nZEDb's database for updating.\n" . $this->c->rsetColor();
+			$dMessage = "No groups specified. Ensure groups are added to nZEDb's database for updating.";
+			if ($this->debug) {
+				$this->debugging->start("backfillAllGroups", $dMessage, 1);
+			}
+
+			if ($this->echo) {
+				$this->c->doEcho($this->c->warning($dMessage), true);
+			}
 		}
 	}
 
-	// Backfill 1 group using time.
-	public function backfillGroup($nntp, $db, $binaries, $groupArr, $left)
+	/**
+	 * Backfill single group.
+	 *
+	 * @param array $groupArr
+	 * @param int $left
+	 * @param int|string $articles
+	 *
+	 * @return void
+	 */
+	public function backfillGroup($groupArr, $left, $articles = '')
 	{
-		if (!isset($nntp)) {
-			exit($this->c->error("Not connected to usenet(backfill->backfillGroup).\n"));
-		}
-
+		// Start time for this group.
 		$this->startGroup = microtime(true);
+		$groupName = str_replace('alt.binaries', 'a.b', $groupArr['name']);
 
-		// Select group, here, only once
-		$data = $nntp->selectGroup($groupArr['name']);
-		if ($nntp->isError($data)) {
-			$data = $nntp->dataError($nntp, $groupArr['name']);
-			if ($nntp->isError($data)) {
-				return;
+		// If our local oldest article 0, it means we never ran update_binaries on the group.
+		if ($groupArr['first_record'] <= 0) {
+			$dMessage =
+				"You need to run update_binaries on " .
+				$groupName .
+				". Otherwise the group is dead, you must disable it.";
+			if ($this->debug) {
+				$this->debugging->start("backfillGroup", $dMessage, 2);
 			}
-		}
 
-		// Get targetpost based on days target.
-		$targetpost = $this->daytopost($nntp, $groupArr['name'], $groupArr['backfill_target'], $data, true);
-		if ($targetpost < 0) {
-			$targetpost = round($data['first']);
-		}
-
-		if ($groupArr['first_record'] == 0 || $groupArr['backfill_target'] == 0) {
-			echo $this->c->warning("Group ${groupArr['name']} has invalid numbers. Have you run update on it? Have you set the backfill days amount?\n");
+			if ($this->echo) {
+				$this->c->doEcho($this->c->error($dMessage));
+			}
 			return;
 		}
 
-		// Check if we are grabbing further than the server has.
-		if ($groupArr['first_record'] <= ($data['first'] + 50000)) {
-			echo $this->c->notice("We have hit the maximum we can backfill for " . str_replace('alt.binaries', 'a.b', $groupArr['name']) . ", skipping it.\n\n");
-			//$groups = new Groups();
-			//$groups->disableForPost($groupArr['name']);
-			return '';
-		}
-
-		// If our estimate comes back with stuff we already have, finish.
-		if ($targetpost >= $groupArr['first_record']) {
-			echo $this->c->notice("Nothing to do, we already have the target post\n\n");
-			return '';
-		}
-
-		echo $this->c->set256($this->primary) . 'Group ' . $data['group'] . ': server has ' . number_format($data['first']) . ' - ' . number_format($data['last']) . ', or ~' .
-		((int) (($this->postdate($nntp, $data['last'], false, $groupArr['name'], false, 'oldest') - $this->postdate($nntp, $data['first'], false, $groupArr['name'], false, 'oldest')) / 86400)) .
-		" days.\nLocal first = " . number_format($groupArr['first_record']) . ' (' .
-		((int) ((date('U') - $this->postdate($nntp, $groupArr['first_record'], false, $groupArr['name'], false, 'oldest')) / 86400)) .
-		' days).  Backfill target of ' . $groupArr['backfill_target'] . ' days is post ' . $targetpost . "\n" . $this->c->rsetColor();
-
-		$done = false;
-		// Set first and last, moving the window by maxxMssgs.
-		$last = $groupArr['first_record'] - 1;
-		// Set the initial "chunk".
-		$first = $last - $binaries->messagebuffer + 1;
-
-		// Just in case this is the last chunk we needed.
-		if ($targetpost > $first) {
-			$first = $targetpost;
-		}
-
-		// In case postdate doesn't get a date.
-		if (is_null($groupArr['first_record_postdate']) || $groupArr['first_record_postdate'] == 'NULL') {
-			$firstr_date = time();
-		} else {
-			$firstr_date = strtotime($groupArr['first_record_postdate']);
-		}
-
-		while ($done === false) {
-			$binaries->startLoop = microtime(true);
-
-			echo $this->c->set256($this->header) . 'Getting ' . (number_format($last - $first + 1)) . " articles from " . str_replace('alt.binaries', 'a.b', $data['group']) . ", " . $left . " group(s) left. (" . (number_format($first - $targetpost)) . " articles in queue).\n" . $this->c->rsetColor();
-			flush();
-			$process = $this->safepartrepair ? 'update' : 'backfill';
-			$binaries->scan($nntp, $groupArr, $first, $last, $process);
-			$newdate = $this->postdate($nntp, $first, false, $groupArr['name'], true, 'oldest');
-			if ($newdate !== false) {
-				$firstr_date = $newdate;
-			}
-
-			$db->queryExec(sprintf('UPDATE groups SET first_record_postdate = %s, first_record = %s, last_updated = NOW() WHERE id = %d', $db->from_unixtime($firstr_date), $db->escapeString($first), $groupArr['id']));
-			if ($first == $targetpost) {
-				$done = true;
-			} else {
-				// Keep going: set new last, new first, check for last chunk.
-				$last = $first - 1;
-				$first = $last - $binaries->messagebuffer + 1;
-				if ($targetpost > $first) {
-					$first = $targetpost;
-				}
-			}
-		}
-		// Set group's first postdate.
-		$db->queryExec(sprintf('UPDATE groups SET first_record_postdate = %s, last_updated = NOW() WHERE id = %d', $db->from_unixtime($firstr_date), $groupArr['id']));
-
-		$timeGroup = number_format(microtime(true) - $this->startGroup, 2);
-		echo $this->c->set256($this->primary) . 'Group processed in ' . $timeGroup . " seconds.\n" . $this->c->rsetColor();
-	}
-
-	// Safe backfill using posts. Going back to a date specified by the user on the site settings.
-	// This does 1 group for x amount of parts until it reaches the date.
-	public function safeBackfill($nntp, $articles = '')
-	{
-		if (!isset($nntp)) {
-			exit($this->c->error("Not connected to usenet(backfill->safeBackfill).\n"));
-		}
-
-		if ($this->hashcheck == 0) {
-			exit("You must run update_binaries.php to update your collectionhash.\n");
-		}
-
-		$db = $this->db;
-		$groupname = $db->queryOneRow(sprintf('SELECT name FROM groups WHERE first_record_postdate BETWEEN %s AND NOW() AND backfill = 1 ORDER BY name ASC', $db->escapeString($this->safebdate)));
-
-		if (!$groupname) {
-			exit('No groups to backfill, they are all at the target date ' . $this->safebdate . ", or you have not enabled them to be backfilled in the groups page.\n");
-		} else {
-			$this->backfillPostAllGroups($nntp, $groupname['name'], $articles, $type = '');
-		}
-	}
-
-	// Backfill groups using user specified article count.
-	public function backfillPostAllGroups($nntp, $groupName = '', $articles = '', $type = '')
-	{
-		if (!isset($nntp)) {
-			exit($this->c->error("Not connected to usenet(backfill->backfillPostAllGroups).\n"));
-		}
-
-		if ($this->hashcheck == 0) {
-			exit($this->c->error("You must run update_binaries.php to update your collectionhash."));
-		}
-
-		$groups = new Groups();
-		if ($groupName != '') {
-			$grp = $groups->getByName($groupName);
-			if ($grp) {
-				$res = array($grp);
-			}
-		} else {
-			if ($type == 'normal') {
-				$res = $groups->getActiveBackfill();
-			} else if ($type == 'date') {
-				$res = $groups->getActiveByDateBackfill();
-			}
-		}
-
-		if ($res) {
-			$counter = 1;
-			$db = $this->db;
-			$binaries = new Binaries();
-			foreach ($res as $groupArr) {
-				if ($groupName === '') {
-					echo $this->c->set256($this->header) . "\nStarting group " . $counter . ' of ' . sizeof($res) . ".\n" . $this->c->rsetColor();
-				}
-				$this->backfillPostGroup($nntp, $db, $binaries, $groupArr, sizeof($res) - $counter, $articles);
-				$counter++;
-			}
-		} else {
-			echo $this->c->warning("No groups specified. Ensure groups are added to nZEDb's database for updating.\n");
-		}
-	}
-
-	public function backfillPostGroup($nntp, $db, $binaries, $groupArr, $left, $articles = '')
-	{
-		if (!isset($nntp)) {
-			exit($this->c->error("Not connected to usenet(backfill->backfillPostGroup).\n"));
-		}
-
-		$this->startGroup = microtime(true);
-
-		echo $this->c->set256($this->header) . 'Processing ' . $groupArr['name'] . "\n" . $this->c->rsetColor();
-
 		// Select group, here, only once
-		$data = $nntp->selectGroup($groupArr['name']);
-		if ($nntp->isError($data)) {
-			$data = $nntp->dataError($nntp, $groupArr['name']);
-			if ($nntp->isError($data)) {
+		$data = $this->nntp->selectGroup($groupArr['name']);
+		if ($this->nntp->isError($data)) {
+			$data = $this->nntp->dataError($this->nntp, $groupArr['name']);
+			if ($this->nntp->isError($data)) {
 				return;
 			}
 		}
 
-		// Get targetpost based on days target.
-		$targetpost = round($groupArr['first_record'] - $articles);
-		if ($targetpost < 0) {
-			$targetpost = round($data['first']);
+		if ($this->echo) {
+			$this->c->doEcho($this->c->primary('Processing ' . $groupName), true);
 		}
 
-		if ($groupArr['first_record'] <= 0 || $targetpost <= 0) {
-			echo $this->c->error("You need to run update_binaries on the " . str_replace('alt.binaries', 'a.b', $data['group']) . ". Otherwise the group is dead, you must disable it.\n");
-			return '';
+		// Check if this is days or post backfill.
+		$postCheck = ($articles === '' ? false : true);
+
+		// Get target post based on date or user specified number.
+		$targetpost = ($postCheck
+			?
+				round($groupArr['first_record'] - $articles)
+			:
+				$this->daytopost($groupArr['backfill_target'], $data)
+		);
+
+		// Check if target post is smaller than server's oldest, set it to oldest if so.
+		if ($targetpost < $data['first']) {
+			$targetpost = $data['first'];
 		}
 
-		// Check if we are grabbing further than the server has.
-		if ($groupArr['first_record'] <= $data['first'] + $articles) {
-			echo $this->c->notice("We have hit the maximum we can backfill for " . str_replace('alt.binaries', 'a.b', $groupArr['name']) . ", skipping it.\n\n");
-			//$groups = new Groups();
-			//$groups->disableForPost($groupArr['name']);
-			return '';
+		// Check if our target post is newer than our oldest post or if our local oldest article is older than the servers oldest.
+		if ($targetpost >= $groupArr['first_record'] || $groupArr['first_record'] <= $data['first']) {
+			$dMessage =
+				"We have hit the maximum we can backfill for " .
+				$groupName .
+				", skipping it, consider disabling backfill on it.";
+			if ($this->debug) {
+				$this->debugging->start("backfillGroup", $dMessage, 4);
+			}
+
+			if ($this->echo) {
+				$this->c->doEcho($this->c->notice($dMessage), true);
+			}
+			return;
 		}
 
-		// If our estimate comes back with stuff we already have, finish.
-		if ($targetpost >= $groupArr['first_record']) {
-			echo $this->c->notice("Nothing to do, we already have the target post.\n\n");
-			return '';
+		if ($this->echo) {
+			$this->c->doEcho(
+				$this->c->primary(
+					'Group ' .
+					$groupName .
+					"'s oldest article is " .
+					number_format($data['first']) .
+					', newest is ' .
+					number_format($data['last']) .
+					".\nOur target article is " .
+					number_format($targetpost) .
+					'. Our oldest article is article ' .
+					number_format($groupArr['first_record']) .
+					'.'
+				)
+			);
 		}
 
-		echo $this->c->set256($this->primary) . 'Group ' . $data['group'] . "'s oldest article is " . number_format($data['first']) . ', newest is ' . number_format($data['last']) . '. The groups retention is: ' .
-		((int) (($this->postdate($nntp, $data['last'], false, $groupArr['name'], false, 'oldest') - $this->postdate($nntp, $data['first'], false, $groupArr['name'], false, 'oldest')) / 86400)) .
-		" days.\nOur oldest article is: " . number_format($groupArr['first_record']) . ' which is (' .
-		((int) ((date('U') - $this->postdate($nntp, $groupArr['first_record'], false, $groupArr['name'], false, 'oldest')) / 86400)) .
-		' days old). Our backfill target is article ' . number_format($targetpost) . ' which is (' . ((int) ((date('U') - $this->postdate($nntp, $targetpost, false, $groupArr['name'], false, 'oldest')) / 86400)) .
-		"\n days old).\n" . $this->c->rsetColor();
-
-		// Calculate total number of parts.
-		$done = false;
-		// Set first and last, moving the window by maxxMssgs.
+		// Set first and last, moving the window by max messages.
 		$last = $groupArr['first_record'] - 1;
 		// Set the initial "chunk".
-		$first = $last - $binaries->messagebuffer + 1;
+		$first = $last - $this->binaries->messagebuffer + 1;
+
 		// Just in case this is the last chunk we needed.
 		if ($targetpost > $first) {
 			$first = $targetpost;
 		}
 
-		// In case postdate doesn't get a date.
-		if (is_null($groupArr['first_record_postdate']) || $groupArr['first_record_postdate'] == 'NULL') {
-			$firstr_date = time();
-		} else {
-			$firstr_date = strtotime($groupArr['first_record_postdate']);
-		}
-
+		$done = false;
 		while ($done === false) {
-			$binaries->startLoop = microtime(true);
 
-			echo $this->c->set256($this->header) . "\nGetting " . ($last - $first + 1) . " articles from " . str_replace('alt.binaries', 'a.b', str_replace('alt.binaries', 'a.b', $data['group'])) . ", " . $left . " group(s) left. (" . (number_format($first - $targetpost)) . " articles in queue)\n" . $this->c->rsetColor();
-			flush();
-			$process = $this->safepartrepair ? 'update' : 'backfill';
-			$binaries->scan($nntp, $groupArr, $first, $last, $process);
-			$newdate = $this->postdate($nntp, $first, false, $groupArr['name'], true, 'oldest');
-			if ($newdate !== false) {
-				$firstr_date = $newdate;
+			if ($this->echo) {
+				$this->c->doEcho(
+					$this->c->set256($this->header) .
+					"\nGetting " .
+					(number_format($last - $first + 1)) .
+					" articles from " .
+					$groupName .
+					", " .
+					$left .
+					" group(s) left. (" .
+					(number_format($first - $targetpost)) .
+					" articles in queue)." .
+					$this->c->rsetColor(), true
+				);
 			}
 
-			$db->queryExec(sprintf('UPDATE groups SET first_record_postdate = %s, first_record = %s, last_updated = NOW() WHERE id = %d', $db->from_unixtime($firstr_date), $db->escapeString($first), $groupArr['id']));
+			flush();
+			$process = $this->safepartrepair ? 'update' : 'backfill';
+			$lastMsg = $this->binaries->scan($groupArr, $first, $last, $process);
+
+			// Get the oldest date.
+			if (isset($lastMsg['firstArticleDate'])) {
+				// Try to get it from the oldest pulled article.
+				$newdate = strtotime($lastMsg['firstArticleDate']);
+			} else {
+				// If above failed, try to get it with postdate method.
+				$newdate = $this->postdate($first, $data);
+			}
+
+			$this->db->queryExec(
+				sprintf('
+					UPDATE groups
+					SET first_record_postdate = %s, first_record = %s, last_updated = NOW()
+					WHERE id = %d',
+					$this->db->from_unixtime($newdate),
+					$this->db->escapeString($first),
+					$groupArr['id'])
+			);
 			if ($first == $targetpost) {
 				$done = true;
 			} else {
 				// Keep going: set new last, new first, check for last chunk.
 				$last = $first - 1;
-				$first = $last - $binaries->messagebuffer + 1;
+				$first = $last - $this->binaries->messagebuffer + 1;
 				if ($targetpost > $first) {
 					$first = $targetpost;
 				}
 			}
 		}
-		// Set group's first postdate.
-		$db->queryExec(sprintf('UPDATE groups SET first_record_postdate = %s, last_updated = NOW() WHERE id = %d', $db->from_unixtime($firstr_date), $groupArr['id']));
 
-		$timeGroup = number_format(microtime(true) - $this->startGroup, 2);
-		echo $this->c->set256($this->header) . $data['group'] . ' processed in ' . $timeGroup . " seconds.\n" . $this->c->rsetColor();
+		if ($this->echo) {
+			$this->c->doEcho(
+				$this->c->primary(
+					PHP_EOL .
+					'Group ' .
+					$groupName .
+					' processed in ' .
+					number_format(microtime(true) - $this->startGroup, 2) .
+					" seconds."
+				), true
+			);
+		}
 	}
 
-	// Returns a single timestamp from a local article number. If the article is missing, you can pass $old as true to return false (then use the last known date).
-	public function postdate($nntp, $post, $debug = true, $group, $old = false, $type)
+	/**
+	 * Safe backfill using posts. Going back to a date specified by the user on the site settings.
+	 * This does 1 group for x amount of parts until it reaches the date.
+	 *
+	 * @param string $articles
+	 *
+	 * @return void
+	 */
+	public function safeBackfill($articles = '')
 	{
-		if (!isset($nntp)) {
-			echo $this->c->error("Not connected to usenet(backfill->postdate).\n");
-			return false;
+		if ($this->hashcheck == 0) {
+			$dMessage = "You must run update_binaries.php to update your collectionhash.\n";
+			if ($this->debug) {
+				$this->debugging->start("safeBackfill", $dMessage, 1);
+			}
+			exit($dMessage);
 		}
 
-		$db = $this->db;
-		$keeppost = $post;
+		$groupname = $this->db->queryOneRow(
+			sprintf('
+				SELECT name FROM groups
+				WHERE first_record_postdate BETWEEN %s AND NOW()
+				AND backfill = 1
+				ORDER BY name ASC',
+				$this->db->escapeString($this->safebdate)
+			)
+		);
 
-		$attempts = 0;
-		$success = $record = false;
-		do {
-			$msgs = $nntp->getOverview($post . "-" . $post, true, false);
-			$attempts++;
-			if (!$nntp->isError($msgs)) {
-				// Set table names
-				$groups = new Groups();
-				$groupID = $groups->getIDByName($group);
-				if ($this->tablepergroup == 1) {
-					if ($db->newtables($groupID) === false) {
-						echo $this->c->error("There is a problem creating new parts/files tables for this group.\n");
-					}
-					$groupa = array();
-					$groupa['cname'] = 'collections_' . $groupID;
-					$groupa['bname'] = 'binaries_' . $groupID;
-					$groupa['pname'] = 'parts_' . $groupID;
-				} else {
-					$groupa = array();
-					$groupa['cname'] = 'collections';
-					$groupa['bname'] = 'binaries';
-					$groupa['pname'] = 'parts';
-				}
-				if ((!isset($msgs[0]['Date']) || $msgs[0]['Date'] == '' || is_null($msgs[0]['Date'])) && $attempts == 0) {
-					$old_post = $post;
-					if ($type == 'newest') {
-						$res = $db->queryOneRow('SELECT p.number AS number FROM ' . $groupa['cname'] . ' c, ' . $groupa['bname'] . ' b, ' . $groupa['pname'] . ' p WHERE c.id = b.collectionid AND b.id = p.binaryid AND c.groupid = ' . $groupID . ' ORDER BY p.number DESC LIMIT 1');
-						if (isset($res['number']) && is_numeric($res['number'])) {
-							$post = $res['number'];
-							echo $this->c->info("Unable to fetch article $old_post from " . str_replace('alt.binaries', 'a.b', $group) . ". Retrying with newest article, from parts table, [$post] from ${groupa['pname']}\n");
-						}
-					} else {
-						$res = $db->queryOneRow('SELECT p.number FROM ' . $groupa['cname'] . ' c, ' . $groupa['bname'] . ' b, ' . $groupa['pname'] . ' p WHERE c.id = b.collectionid AND b.id = p.binaryid AND c.groupid = ' . $groupID . ' ORDER BY p.number ASC LIMIT 1');
-						if (isset($res['number']) && is_numeric($res['number'])) {
-							$post = $res['number'];
-							echo $this->c->info("Unable to fetch article $old_post from " . str_replace('alt.binaries', 'a.b', $group) . ". Retrying with oldest article, from parts table, [$post] from ${groupa['pname']}.\n");
-						}
-					}
-					$success = false;
-				}
-				if ((!isset($msgs[0]['Date']) || $msgs[0]['Date'] == '' || is_null($msgs[0]['Date'])) && $attempts != 0) {
-					if ($type == 'newest') {
-						$res = $db->queryOneRow('SELECT date FROM ' . $groupa['cname'] . ' ORDER BY date DESC LIMIT 1');
-						if (isset($res['date'])) {
-							$date = $res['date'];
-							echo $this->c->info("Unable to fetch article $post from " . str_replace('alt.binaries', 'a.b', $group) . ". Using newest date from ${groupa['cname']}.\n");
-							if (strlen($date) > 0) {
-								$success = true;
-							}
-						}
-					} else {
-						$res = $db->queryOneRow('SELECT date FROM ' . $groupa['cname'] . ' ORDER BY date ASC LIMIT 1');
-						if (isset($res['date'])) {
-							$date = $res['date'];
-							echo $this->c->info("Unable to fetch article $post from " . str_replace('alt.binaries', 'a.b', $group) . ". Using oldest date from ${groupa['cname']}.\n");
-							if (strlen($date) > 0) {
-								$success = true;
-							}
-						}
-					}
+		if (!$groupname) {
+			$dMessage =
+				'No groups to backfill, they are all at the target date ' .
+				$this->safebdate .
+				", or you have not enabled them to be backfilled in the groups page.\n";
+			if ($this->debug) {
+				$this->debugging->start("safeBackfill", $dMessage, 1);
+			}
+			exit($dMessage);
+		} else {
+			$this->backfillAllGroups($groupname['name'], $articles);
+		}
+	}
+
+	/**
+	 * Returns a single timestamp from a local article number.
+	 * If the article is missing, you can pass $old as true to return false (then use the last known date).
+	 *
+	 * @param int    $post      The article number to download.
+	 * @param array  $groupData Usenet group info from NNTP selectGroup method.
+	 *
+	 * @return bool|int
+	 */
+	public function postdate($post, $groupData)
+	{
+		// Set table names
+		$groupID = $this->groups->getIDByName($groupData['group']);
+		if ($this->tablepergroup === 1) {
+			if ($this->db->newtables($groupID) === false) {
+				$dMessage = "There is a problem creating new parts/files tables for this group.";
+				if ($this->debug) {
+					$this->debugging->start("postdate", $dMessage, 2);
 				}
 
-				if (isset($msgs[0]['Date']) && $msgs[0]['Date'] != '' && $success === false) {
-					$date = $msgs[0]['Date'];
-					if (strlen($date) > 0) {
-						$success = true;
-					}
-				}
-
-				if ($debug && $attempts > 0) {
-					echo $this->c->debug('Retried ' . $attempts . " time(s).\n");
+				if ($this->echo) {
+					$this->c->doEcho($this->c->error($dMessage), true);
 				}
 			}
-		} while ($attempts <= 20 && $success === false);
+			$groupA['cname'] = 'collections_' . $groupID;
+			$groupA['bname'] = 'binaries_' . $groupID;
+			$groupA['pname'] = 'parts_' . $groupID;
+		} else {
+			$groupA['cname'] = 'collections';
+			$groupA['bname'] = 'binaries';
+			$groupA['pname'] = 'parts';
+		}
 
-		if ($success === false && $old === true) {
-			if ($type == 'oldest') {
-				$res = $db->queryOneRow(sprintf("SELECT first_record_postdate from groups where name = '%s'", $group));
-				if (array_key_exists('first_record_postdate', $res)) {
-					echo $this->c->info('Unable to fetch article ' . $keeppost . ' from ' . str_replace('alt.binaries', 'a.b', $group) . '. Using current first_record_postdate[' . $res['first_record_postdate'] . "], instead.\n");
-					return strtotime($res['first_record_postdate']);
-				} else {
-					return false;
+		$currentPost = $post;
+
+		$attempts = $date = 0;
+		do {
+			$attempts++;
+
+			// Download a single article.
+			$header = $this->nntp->getOverview((int)$currentPost . "-" . (int)$currentPost, true, false);
+
+			// Check if the article is missing, if it is, retry downloading it.
+			if (!$this->nntp->isError($header)) {
+
+				// Check if the date is set.
+				if (isset($header[0]['Date']) && strlen($header[0]['Date']) > 0) {
+					$date = $header[0]['Date'];
+					break;
 				}
 			} else {
-				$res = $db->queryOneRow(sprintf("SELECT last_record_postdate from groups where name = '%s'", $group));
-				if (array_key_exists('last_record_postdate', $res)) {
-					echo $this->c->info('Unable to fetch article ' . $keeppost . ' from ' . str_replace('alt.binaries', 'a.b', $group) . '. Using current last_record_postdate[' . $res['last_record_postdate'] . "], instead.\n");
-					return strtotime($res['last_record_postdate']);
-				} else {
-					return false;
+			// Try to get locally.
+				$local = $this->db->queryOneRow(
+					'SELECT c.date AS date FROM ' .
+					$groupA['cname'] .
+					' c, ' .
+					$groupA['bname'] .
+					' b, ' .
+					$groupA['pname'] .
+					' p WHERE c.id = b.collectionid AND b.id = p.binaryid AND c.groupid = ' .
+					$groupID .
+					' AND p.number = ' .
+					$currentPost .
+					' LIMIT 1'
+				);
+
+				// If the row exists return.
+				if ($local !== false) {
+					$date = $local['date'];
+					break;
 				}
 			}
-		} else if ($success === false) {
-			return false;
+
+			// Increment $currentPost if closer to oldest post.
+			$minPossible = ($currentPost - $groupData['first']);
+			if ($minPossible <= 1) {
+				// If we hit the minimum, try to decrement instead.
+				$maxPossible = ($groupData['last'] - $currentPost);
+				if ($maxPossible <= 1) {
+					break;
+				} else {
+					// Change current post to 0.5 to 2.5% lower.
+					$currentPost = round($currentPost / (mt_rand(1005, 1025) / 1000), 0 , PHP_ROUND_HALF_UP);
+					if ($currentPost <= $groupData['first']) {
+						break;
+					}
+				}
+			} else {
+				// Change current post to 0.5 to 2.5% higher.
+				$currentPost += round((mt_rand(1005, 1025) / 1000) * $currentPost, 0 , PHP_ROUND_HALF_UP);
+				if ($currentPost >= $groupData['last']) {
+					break;
+				}
+			}
+
+			if ($this->debug) {
+				$this->c->doEcho($this->c->debug('Postdate retried ' . $attempts . " time(s)."));
+			}
+		} while ($attempts <= 20);
+
+		// If we didn't get a date, set it to now.
+		if ($date === 0) {
+			$date = Date('r');
 		}
 
-		if ($debug) {
-			echo $this->c->debug('postdate for post: ' . $post . ' came back ' . $date . ' (');
-		}
 		$date = strtotime($date);
 
-		if ($debug) {
-			echo $this->c->debug($date . ' seconds unixtime or ' . $this->daysOld($date) . " days)\n");
+		if ($this->debug && $date !== false) {
+			$this->debugging->start(
+				"postdate",
+				'Article (' .
+				$post .
+				"'s) date is (" .
+				$date .
+				') (' .
+				$this->daysOld($date) .
+				" days old)",
+				5);
 		}
+
 		return $date;
 	}
 
-	// Returns article number based on # of days.
-	public function daytopost($nntp, $group, $days, $data, $debug = true)
+	/**
+	 * Returns article number based on # of days.
+	 *
+	 * @param int   $days      How many days back we want to go.
+	 * @param array $data      Group data from usenet.
+	 *
+	 * @return string
+	 */
+	public function daytopost($days, $data)
 	{
-		if (!isset($nntp)) {
-			exit($this->c->error("Not connected to usenet(backfill->daytopost).\n"));
-		}
-		// DEBUG every postdate call?!?!
-		$pddebug = false;
-		if ($debug) {
-			echo $this->c->info('Finding article for ' . $group . ' ' . $days . " days back.\n");
+		if ($this->debug) {
+			$this->debugging->start("daytopost", 'Finding article for ' . $data['group'] . ' ' . $days . " days back.", 5);
 		}
 
-		// Goal timestamp.
-		$goaldate = date('U') - (86400 * $days);
+		// The date we want.
+		$goaldate =
+			//current unix time (ex. 1395699114)
+			time()
+			//minus
+			-
+			// 86400 (seconds in a day) times days wanted. (ie 1395699114 - 2592000 (30days)) = 1393107114
+			(86400 * $days);
+
+		// The total number of articles in this group.
 		$totalnumberofarticles = $data['last'] - $data['first'];
+
+		// The newest article in the group.
 		$upperbound = $data['last'];
+		// The oldest article in the group.
 		$lowerbound = $data['first'];
 
-		if ($debug) {
-			echo $this->c->debug('Total Articles: ' . number_format($totalnumberofarticles) . ' Newest: ' . number_format($upperbound) . ' Oldest: ' . number_format($lowerbound) . "\nGoal: " . date('r', $goaldate) . " ({$goaldate}).\n");
+		if ($this->debug) {
+			$this->debugging->start(
+				"daytopost",
+				'Total Articles: (' .
+				number_format($totalnumberofarticles) .
+				') Newest: (' .
+				number_format($upperbound) .
+				') Oldest: (' .
+				number_format($lowerbound) .
+				") Goal: (" .
+				date('r', $goaldate)
+				.')',
+				5);
 		}
 
-		if ($data['last'] == PHP_INT_MAX) {
-			exit($this->c->info("Group data is coming back as php's max value. You should not see this since we use a patched Net_NNTP that fixes this bug.\n"));
-		}
+		// The servers oldest date.
+		$firstDate = $this->postdate($data['first'], $data);
+		// The servers newest date.
+		$lastDate = $this->postdate($data['last'], $data);
 
-		$firstDate = $this->postdate($nntp, $data['first'], $pddebug, $group, false, 'oldest');
-		$lastDate = $this->postdate($nntp, $data['last'], $pddebug, $group, false, 'oldest');
-
+		// If the date we want is older than the oldest date in the group return the groups oldest article.
 		if ($goaldate < $firstDate) {
-			echo $this->c->warning("Backfill target of $days day(s) is older than the first article stored on your news server.\nStarting from the first available article (" . date('r', $firstDate) . ' or ' . $this->daysOld($firstDate) . " days).\n");
+			$dMessage =
+				"Backfill target of $days day(s) is older than the first article stored on your news server.\nStarting from the first available article (" .
+				date('r', $firstDate) . ' or ' .
+				$this->daysOld($firstDate) . " days).";
+			if ($this->debug) {
+				$this->debugging->start("daytopost", $dMessage, 3);
+			}
+
+			if ($this->echo) {
+				$this->c->doEcho($this->c->warning($dMessage), true);
+			}
 			return $data['first'];
+
+		// If the date we want is newer than the groups newest date, return the groups newest article.
 		} else if ($goaldate > $lastDate) {
-			echo $this->c->error('Backfill target of ' . $days . " day(s) is newer than the last article stored on your news server.\nTo backfill this group you need to set Backfill Days to at least " . ceil($this->daysOld($lastDate) + 1) . ' days (' . date('r', $lastDate - 86400) . ").\n");
-			return '';
+			$dMessage =
+				'Backfill target of ' .
+				$days .
+				" day(s) is newer than the last article stored on your news server.\nTo backfill this group you need to set Backfill Days to at least " .
+				ceil($this->daysOld($lastDate) + 1) .
+				' days (' .
+				date('r', $lastDate - 86400) .
+				").";
+			if ($this->debug) {
+				$this->debugging->start("daytopost", $dMessage, 2);
+			}
+
+			if ($this->echo) {
+				$this->c->doEcho($this->c->error($dMessage), true);
+			}
+			return $data['last'];
 		}
 
-		$mask1 = "%-25s %15s %-30s\n";
-		$mask2 = "%-25s %15s\n";
-		$mask3 = "%-10s %30s\n";
-		if ($debug) {
-			printf($mask3, 'DEBUG:', 'Searching for postdate.');
-			printf($mask1, 'Goaldate:', $goaldate, '(' . date('r', $goaldate) . ')');
-			printf($mask1, 'Firstdate:', $firstDate, '(' . ((is_int($firstDate)) ? date('r', $firstDate) : 'n/a') . ')');
-			printf($mask1, 'Lastdate:', $lastDate, '(' . date('r', $lastDate) . ')');
+		if ($this->debug) {
+			$this->debugging->start("daytopost",
+				'Searching for postdate. Goal: ' .
+				'(' .
+				date('r',  $goaldate) .
+				') Firstdate: ' .
+				'(' .
+				((is_int($firstDate)) ? date('r', $firstDate) : 'n/a') .
+				')' .
+				' Lastdate: ' .
+				'(' .
+				date('r', $lastDate) .
+				')',
+				5);
 		}
 
+		// Half of total groups articles.
 		$interval = floor(($upperbound - $lowerbound) * 0.5);
-		$templowered = '';
 		$dateofnextone = $lastDate;
 
-		if ($debug) {
-			printf($mask2, 'First Post:', number_format($data['first']));
-			printf($mask2, 'Last Post:', number_format($data['last']));
-			printf($mask2, 'Posts Available:', number_format($interval * 2));
+		if ($this->debug) {
+			$this->debugging->start(
+				"daytopost",
+				'First Post: ' .
+				number_format($data['first']) .
+				' Last Post: ' .
+				number_format($data['last']) .
+				' Posts Available: ' .
+				number_format($interval * 2),
+				5);
 		}
 
-		// Match on days not timestamp to speed things up.
-		while ($this->daysOld($dateofnextone) < $days) {
-			while (($tmpDate = $this->postdate($nntp, ($upperbound - $interval), $pddebug, $group, false, 'oldest')) > $goaldate) {
-				$upperbound = $upperbound - $interval;
-				if ($debug) {
-					printf($mask1, 'New upperbound:', number_format($upperbound), 'is ' . $this->daysOld($tmpDate) . ' days old.');
-				}
-			}
+		$firstTries = $middleTries = $endTries = 0;
+		$done = false;
+		// Loop until wanted days is bigger than found days.
+		while (!$done) {
 
-			if (!$templowered) {
+			// Keep going half way from oldest to newest article, trying to get a date until we have a date newer than the goal.
+			$tmpDate =$this->postdate(($upperbound - $interval), $data);
+			if (round($tmpDate) >= $goaldate || $firstTries++ >= 30) {
+
+				// Now we found a date newer than the goal, so try going back older (in smaller steps) until we get closer to the target date.
+				while (true) {
+					$interval = ceil(($interval * 1.08));
+					if ($this->debug) {
+						$this->debugging->start(
+							"daytopost",
+							'Increased interval to: (' .
+							number_format($interval) .
+							') articles, article ' .
+							($upperbound - $interval),
+							5);
+					}
+
+					$tmpDate =$this->postdate(($upperbound - $interval), $data);
+
+					// Go newer again, in even smaller steps.
+					if (round($tmpDate) <= $goaldate || $middleTries++ >= 20) {
+						while (true) {
+							$interval = ceil(($interval / 1.008));
+							if ($this->debug) {
+								$this->debugging->start(
+									"daytopost",
+									'Increased interval to: (' .
+									number_format($interval) .
+									') articles, article ' .
+									($upperbound - $interval),
+									5);
+							}
+
+							$tmpDate =$this->postdate(($upperbound - $interval), $data);
+							if (round($tmpDate) >= $goaldate || $endTries++ > 10) {
+								$dateofnextone = $tmpDate;
+								$upperbound = ($upperbound - $interval);
+								$done = true;
+								break;
+							}
+						}
+					}
+					if ($done) {
+						break;
+					}
+				}
+			} else {
 				$interval = ceil(($interval / 2));
-				if ($debug) {
-					printf($mask1, 'Checking interval at:', number_format($interval), 'articles.');
+				if ($this->debug) {
+					$this->debugging->start(
+						"daytopost",
+						'Reduced interval to: (' .
+						number_format($interval) .
+						') articles, article ' .
+						($upperbound - $interval),
+						5);
 				}
-			}
-			$dateofnextone = $this->postdate($nntp, ($upperbound - 1), $pddebug, $group, false, 'oldest');
-			while (!$dateofnextone) {
-				$dateofnextone = $this->postdate($nntp, ($upperbound - 1), $pddebug, $group, false, 'oldest');
 			}
 		}
 
-		printf($mask1, 'Determined to be article:', number_format($upperbound), 'which is ' . $this->daysOld($dateofnextone) . ' days old (' . date('r', $dateofnextone) . ')');
+		$dMessage =
+			'Determined to be article: ' .
+			number_format($upperbound) .
+			' which is ' .
+			$this->daysOld($dateofnextone) .
+			' days old (' .
+			date('r', $dateofnextone) .
+			')';
+		if ($this->debug) {
+			$this->debugging->start("daytopost", $dMessage, 5);
+		}
+
+		if ($this->echo) {
+			$this->c->doEcho($dMessage, true);
+		}
 		return $upperbound;
 	}
 
+	/**
+	 * Convert unix time to days ago.
+	 *
+	 * @param int $timestamp unix time
+	 *
+	 * @return float
+	 */
 	private function daysOld($timestamp)
 	{
-		return round((time() - $timestamp) / 86400, 1);
+		return round((time() - (!is_numeric($timestamp) ? strtotime($timestamp) : $timestamp)) / 86400, 1);
 	}
 
-	public function getRange($group, $first, $last, $threads, $nntp)
+	/**
+	 * @param string $group
+	 * @param int $first
+	 * @param int $last
+	 * @param int $threads
+	 *
+	 * @return void
+	 */
+	public function getRange($group, $first, $last, $threads)
 	{
-		if (!isset($nntp)) {
-			exit($this->c->error("Not connected to usenet(backfill->getRange).\n"));
-		}
-
-		$groups = new Groups();
-		$this->startGroup = microtime(true);
-		$binaries = new Binaries();
-		$groupArr = $groups->getByName($group);
+		$binaries = new Binaries($this->nntp, $this->echo, $this);
+		$groupArr = $this->groups->getByName($group);
 		$process = $this->safepartrepair ? 'update' : 'backfill';
 
-		if ($this->nntpproxy == 0) {
-			echo $this->c->set256($this->header) . 'Processing ' . str_replace('alt.binaries', 'a.b', $groupArr['name']) . (($this->compressedHeaders) ? ' Using Compression' : ' Not Using Compression') . ' ==> T-' . $threads . ' ==> ' . number_format($first) . ' to ' . number_format($last) . "\n" . $this->c->rsetColor();
-		} else {
-			echo $this->c->set256($this->header) . 'Processing ' . str_replace('alt.binaries', 'a.b', $groupArr['name']) . ' Using NNTPProxy ==> T-' . $threads . ' ==> ' . number_format($first) . ' to ' . number_format($last) . "\n" . $this->c->rsetColor();
+		if ($this->echo) {
+			if ($this->nntpproxy == 0) {
+				$this->c->doEcho(
+					$this->c->set256($this->header) .
+					'Processing ' .
+					str_replace('alt.binaries', 'a.b', $groupArr['name']) .
+					(($this->compressedHeaders) ? ' Using Compression' : ' Not Using Compression') .
+					' ==> T-' .
+					$threads .
+					' ==> ' .
+					number_format($first) .
+					' to ' .
+					number_format($last) .
+					$this->c->rsetColor()
+					, true
+				);
+			} else {
+				$this->c->doEcho(
+					$this->c->set256($this->header) .
+					'Processing ' .
+					str_replace('alt.binaries', 'a.b', $groupArr['name']) .
+					' Using NNTPProxy ==> T-' .
+					$threads .
+					' ==> ' .
+					number_format($first) .
+					' to ' .
+					number_format($last) .
+					$this->c->rsetColor()
+					, true
+				);
+			}
 		}
-		$this->startLoop = microtime(true);
 
 		// Select group, here, only once
-		$data = $nntp->selectGroup($groupArr['name']);
-		if ($nntp->isError($data)) {
-			$data = $nntp->dataError($nntp, $groupArr['name']);
-			if ($nntp->isError($data)) {
+		$data = $this->nntp->selectGroup($groupArr['name']);
+		if ($this->nntp->isError($data)) {
+			$data = $this->nntp->dataError($this->nntp, $groupArr['name']);
+			if ($this->nntp->isError($data)) {
 				return;
 			}
 		}
 
-		$binaries->scan($nntp, $groupArr, $last, $first, $process);
+		$binaries->scan($groupArr, $last, $first, $process);
 	}
 
-	function getFinal($group, $first, $type, $nntp)
+	/**
+	 * @param string $group
+	 * @param int $first
+	 * @param int $type
+	 *
+	 * @return void
+	 */
+	public function getFinal($group, $first, $type)
 	{
-		if (!isset($nntp)) {
-			exit($this->c->error("Not connected to usenet(backfill->getFinal).\n"));
-		}
-
-		$db = $this->db;
-		$groups = new Groups();
-		$groupArr = $groups->getByName($group);
+		$groupArr = $this->groups->getByName($group);
 
 		// Select group, here, only once
-		$data = $nntp->selectGroup($groupArr['name']);
-		if ($nntp->isError($data)) {
-			$data = $nntp->dataError($nntp, $groupArr['name']);
-			if ($nntp->isError($data)) {
+		$data = $this->nntp->selectGroup($groupArr['name']);
+		if ($this->nntp->isError($data)) {
+			$data = $this->nntp->dataError($this->nntp, $groupArr['name']);
+			if ($this->nntp->isError($data)) {
 				return;
 			}
 		}
 
 		if ($type == 'Backfill') {
-			$postsdate = $this->postdate($nntp, $first, false, $group, true, 'oldest');
+			$postsdate = $this->postdate($first, $data);
 		} else {
-			$postsdate = $this->postdate($nntp, $first, false, $group, true, 'newest');
+			$postsdate = $this->postdate($first, $data);
 		}
-		$postsdate = $db->from_unixtime($postsdate);
+		$postsdate = $this->db->from_unixtime($postsdate);
 
 		if ($type == 'Backfill') {
-			$db->queryExec(sprintf('UPDATE groups SET first_record_postdate = %s, first_record = %s, last_updated = NOW() WHERE id = %d', $postsdate, $db->escapeString($first), $groupArr['id']));
+			$this->db->queryExec(sprintf('UPDATE groups SET first_record_postdate = %s, first_record = %s, last_updated = NOW() WHERE id = %d', $postsdate, $this->db->escapeString($first), $groupArr['id']));
 		} else {
-			$db->queryExec(sprintf('UPDATE groups SET last_record_postdate = %s, last_record = %s, last_updated = NOW() WHERE id = %d', $postsdate, $db->escapeString($first), $groupArr['id']));
+			$this->db->queryExec(sprintf('UPDATE groups SET last_record_postdate = %s, last_record = %s, last_updated = NOW() WHERE id = %d', $postsdate, $this->db->escapeString($first), $groupArr['id']));
 		}
 
-		echo $this->c->set256($this->primary) . $type . ' Safe Threaded for ' . $group . " completed.\n" . $this->c->rsetColor();
+		if ($this->echo) {
+			$this->c->doEcho(
+				$this->c->set256($this->primary) .
+				$type .
+				' Safe Threaded for ' .
+				$group .
+				" completed." .
+				$this->c->rsetColor()
+				, true
+			);
+		}
 	}
-
 }

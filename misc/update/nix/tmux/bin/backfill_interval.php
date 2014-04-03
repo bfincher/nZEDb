@@ -10,7 +10,7 @@ if (!isset($argv[1])) {
 } else if (isset($argv[1])) {
 	// Create the connection here and pass
 	$nntp = new NNTP();
-	if ($nntp->doConnect() === false) {
+	if ($nntp->doConnect() !== true) {
 		exit($c->error("Unable to connect to usenet."));
 	}
 	if ($site->nntpproxy === "1") {
@@ -19,13 +19,13 @@ if (!isset($argv[1])) {
 
 	$pieces = explode(' ', $argv[1]);
 	if (isset($pieces[1]) && $pieces[1] == 1) {
-		$backfill = new Backfill();
-		$backfill->backfillAllGroups($nntp, $pieces[0]);
+		$backfill = new Backfill($nntp);
+		$backfill->backfillAllGroups($pieces[0]);
 	} else if (isset($pieces[1]) && $pieces[1] == 2) {
 		$tmux = new Tmux();
 		$count = $tmux->get()->backfill_qty;
-		$backfill = new Backfill();
-		$backfill->backfillPostAllGroups($nntp, $pieces[0], $count, $type = '');
+		$backfill = new Backfill($nntp);
+		$backfill->backfillAllGroups($pieces[0], $count, $type = '');
 	}
 	if ($site->nntpproxy != "1") {
 		$nntp->doQuit();

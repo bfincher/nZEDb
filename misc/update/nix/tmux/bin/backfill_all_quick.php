@@ -11,7 +11,7 @@ if (!isset($argv[1])) {
 
 // Create the connection here and pass
 $nntp = new NNTP();
-if ($nntp->doConnect() === false) {
+if ($nntp->doConnect() !== true) {
 	exit($c->error("Unable to connect to usenet."));
 }
 if ($site->nntpproxy === "1") {
@@ -19,8 +19,8 @@ if ($site->nntpproxy === "1") {
 }
 
 $pieces = explode(' ', $argv[1]);
-$backfill = new Backfill();
-$backfill->backfillPostAllGroups($nntp, $pieces[0], 10000, 'normal');
+$backfill = new Backfill($nntp);
+$backfill->backfillAllGroups($pieces[0], 10000, 'normal');
 if ($site->nntpproxy != "1") {
 	$nntp->doQuit();
 }

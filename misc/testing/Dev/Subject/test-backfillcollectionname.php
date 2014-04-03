@@ -18,14 +18,14 @@ function dogroup($name, $articles)
 	$s = new Sites();
 	$site = $s->get();
 	$nntp = new NNTP();
-	if (($site->alternate_nntp == 1 ? $nntp->doConnect(true, true) : $nntp->doConnect()) === false) {
+	if ($nntp->doConnect() !== true) {
 		exit($c->error("Unable to connect to usenet."));
 	}
 	if ($site->nntpproxy === "1") {
 		usleep(500000);
 	}
-	$backfill = new Backfill();
-	$backfill->backfillPostAllGroups($nntp, $name, $articles);
+	$backfill = new Backfill($nntp);
+	$backfill->backfillAllGroups($name, $articles);
 	echo $c->primaryOver("Type y and press enter to continue, n to quit.\n");
 	if (trim(fgets(fopen("php://stdin", "r"))) == 'y') {
 		return true;

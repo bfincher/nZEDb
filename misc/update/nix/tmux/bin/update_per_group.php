@@ -16,15 +16,15 @@ $groups = new Groups();
 $groupname = $groups->getByNameByID($groupid);
 $group = $groups->getByName($groupname);
 $consoletools = new ConsoleTools();
-$binaries = new Binaries();
-$backfill = new Backfill();
 $db = new DB();
 
 // Create the connection here and pass, this is for post processing, so check for alternate
 $nntp = new NNTP();
-if (($site->alternate_nntp == 1 ? $nntp->doConnect(true, true) : $nntp->doConnect()) === false) {
+if (($site->alternate_nntp === '1' ? $nntp->doConnect(true, true) : $nntp->doConnect()) !== true) {
 	exit($c->error("Unable to connect to usenet."));
 }
+$binaries = new Binaries($nntp);
+$backfill = new Backfill($nntp);
 if ($site->nntpproxy === "1") {
 	usleep(500000);
 }
@@ -35,10 +35,10 @@ if ($releases->hashcheck == 0) {
 
 if ($pieces[0] != 'Stage7b') {
 	// Update Binaries per group
-	$binaries->updateGroup($group, $nntp);
+	$binaries->updateGroup($group);
 
 	// Backfill per group
-	$backfill->backfillPostAllGroups($nntp, $groupname, 20000, 'normal');
+	$backfill->backfillAllGroups($groupname, 20000, 'normal');
 
 	// Update Releases per group
 	try {
@@ -69,7 +69,7 @@ if ($pieces[0] != 'Stage7b') {
 //		printf($mask, str_replace('alt.binaries', 'a.b', $groupname), $first);
 
 	$postprocess = new PostProcess(true);
-	$postprocess->processAdditional(null, null, null, $groupid, $nntp);
+	$postprocess->processAdditional($nntp, '', $groupid);
 	$nfopostprocess = new Nfo(true);
 	$nfopostprocess->processNfoFiles(null, null, null, $groupid, $nntp);
 	if ($site->nntpproxy != "1") {
