@@ -56,7 +56,7 @@ modulo=$(( $count%10 ))
 if [ $modulo == 0 ]; then
    pushd ${NEWZNAB_PATH}
    echo "optimizing db"
-   php optimise_db.php true >> $LOG_DIR/update.log
+   php optimise_db.php run >> $LOG_DIR/update.log
    popd
 fi
 (( count++ ))
