@@ -52,7 +52,7 @@ export REL_LOG=$LOG_DIR/relup.log
 countfile=$BASEDIR/misc/cron/count.txt
 
 count=$(cat $countfile)
-modulo=$(( $count%10 ))
+modulo=$(( $count%100 ))
 if [ $modulo == 0 ]; then
    pushd ${NEWZNAB_PATH}
    echo "optimizing db"
