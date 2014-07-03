@@ -185,7 +185,7 @@ class Console
 				. "GROUP_CONCAT(r.comments ORDER BY r.postdate DESC SEPARATOR ',') AS grp_release_comments, "
 				. "GROUP_CONCAT(r.grabs ORDER BY r.postdate DESC SEPARATOR ',') AS grp_release_grabs, "
 				. "con.*, r.consoleinfoid, groups.name AS group_name, rn.id as nfoid FROM releases r "
-				. "LEFT OUTER JOIN groups ON groups.id = r.groupid "
+				. "LEFT OUTER JOIN groups ON groups.id = r.group_id "
 				. "LEFT OUTER JOIN releasenfo rn ON rn.releaseid = r.id "
 				. "INNER JOIN consoleinfo con ON con.id = r.consoleinfoid "
 				. "WHERE r.nzbstatus = 1 AND con.cover = 1 AND con.title != '' AND "
@@ -345,7 +345,7 @@ class Console
 			$gameInfo['platform'] = str_replace('PS3', 'PlayStation 3', $gameInfo['platform']);
 		} // baseline single quote
 		if (preg_match('/^PS4$/i', $gameInfo['platform'])) {
-			$gameInfo['platform'] = str_replace('PS3', 'PlayStation 4', $gameInfo['platform']);
+			$gameInfo['platform'] = str_replace('PS4', 'PlayStation 4', $gameInfo['platform']);
 		} // baseline single quote
 		if (preg_match('/^PSP$/i', $gameInfo['platform'])) {
 			$gameInfo['platform'] = str_replace('PSP', 'Sony PSP', $gameInfo['platform']);

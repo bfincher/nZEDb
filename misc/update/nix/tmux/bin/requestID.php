@@ -56,7 +56,7 @@ if ($bFound === true) {
 		if ($dupe === false || ($dupe !== false && $dupe['requestid'] != $requestID)) {
 			$preid = $db->queryInsert(
 				sprintf("
-				INSERT INTO predb (title, source, requestid, groupid)
+				INSERT INTO predb (title, source, requestid, group_id)
 				VALUES (%s, %s, %d, %d)",
 					$db->escapeString($title),
 					$db->escapeString('requestWEB'),
@@ -72,12 +72,17 @@ if ($bFound === true) {
 
 	$newcatname = $category->getNameByID($determinedcat);
 	$method = ($local === true) ? 'requestID local' : 'requestID web';
-	echo $c->headerOver($n . $n . 'New name:  ') . $c->primary($title) .
-	$c->headerOver('Old name:  ') . $c->primary($pieces[1]) .
-	$c->headerOver('New cat:   ') . $c->primary($newcatname) .
-	$c->headerOver('Group:     ') . $c->primary(trim($pieces[2])) .
-	$c->headerOver('Method:    ') . $c->primary($method) .
-	$c->headerOver('ReleaseID: ') . $c->primary($pieces[0]);
+
+	NameFixer::echoChangedReleaseName(array(
+			'new_name'     => $title,
+			'old_name'     => $pieces[1],
+			'new_category' => $newcatname,
+			'old_category' => '',
+			'group'        => trim($pieces[2]),
+			'release_id'   => $pieces[0],
+			'method'       => $method
+		)
+	);
 	$updated++;
 } else {
 	$db->queryExec('UPDATE releases SET reqidstatus = -3 WHERE id = ' . $pieces[0]);
@@ -109,7 +114,7 @@ function localLookup($requestID, $groupName, $oldname)
 	$db = new DB();
 	$groups = new Groups();
 	$groupid = $groups->getIDByName($groupName);
-	$run = $db->queryOneRow(sprintf("SELECT id, title FROM predb WHERE requestid = %d AND groupid = %d", $requestID, $groupid));
+	$run = $db->queryOneRow(sprintf("SELECT id, title FROM predb WHERE requestid = %d AND group_id = %d", $requestID, $groupid));
 	if (isset($run['title']) && preg_match('/s\d+/i', $run['title']) && !preg_match('/s\d+e\d+/i', $run['title'])) {
 		return false;
 	}
@@ -127,7 +132,7 @@ function localLookup($requestID, $groupName, $oldname)
 	} else if ($groupName == 'alt.binaries.etc') {
 		$groupid = $groups->getIDByName('alt.binaries.teevee');
 	}
-	$run1 = $db->queryOneRow(sprintf("SELECT id, title FROM predb WHERE requestid = %d AND groupid = %d", $requestID, $groupid));
+	$run1 = $db->queryOneRow(sprintf("SELECT id, title FROM predb WHERE requestid = %d AND group_id = %d", $requestID, $groupid));
 	if (isset($run1['title'])) {
 		return array('title' => $run['title'], 'id' => $run['id']);
 	}

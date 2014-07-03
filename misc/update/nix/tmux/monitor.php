@@ -124,8 +124,8 @@ $proc_work2 = "SELECT "
 	. "(SELECT COUNT(*) FROM partrepair WHERE attempts < 5) AS partrepair_table";
 
 $proc_work3 = "SELECT "
-	. "((SELECT COUNT(*) FROM releases WHERE nzbstatus = 1 AND isrequestid = 1 AND preid = 0 AND reqidstatus in (0, -1)) + "
-	. "(SELECT COUNT(*) FROM releases WHERE nzbstatus = 1 AND isrequestid = 1 AND preid = 0 AND reqidstatus = -3 AND adddate > NOW() - INTERVAL " . $request_hours . " HOUR)) AS requestid_inprogress, "
+	. "(SELECT COUNT(*) FROM releases WHERE nzbstatus = 1 AND isrequestid = 1 AND preid = 0 AND reqidstatus in (0, -1)) AS requestid_local, "
+	. "(SELECT COUNT(*) FROM releases WHERE nzbstatus = 1 AND isrequestid = 1 AND preid = 0 AND reqidstatus = -3 AND adddate > NOW() - INTERVAL " . $request_hours . " HOUR) AS requestid_web, "
 	. "(SELECT COUNT(*) FROM releases WHERE nzbstatus = 1 AND isrequestid = 1 AND reqidstatus = 1) AS requestid_matched, "
 	. "(SELECT COUNT(*) FROM releases WHERE preid > 0) AS predb_matched, "
 	. "(SELECT COUNT(DISTINCT(preid)) FROM releases WHERE preid > 0) AS distinct_predb_matched, "
@@ -538,8 +538,8 @@ while ($i > 0) {
 		if ($proc_work_result[0]['releases'] != null) {
 			$releases_start = $proc_work_result[0]['releases'];
 		}
-		if ($proc_work_result3[0]['requestid_inprogress'] != null) {
-			$requestid_inprogress_start = $proc_work_result3[0]['requestid_inprogress'];
+		if ($proc_work_result3[0]['requestid_local'] != null || $proc_work_result3[0]['requestid_web'] != null) {
+			$requestid_inprogress_start = $proc_work_result3[0]['requestid_local'] + $proc_work_result3[0]['requestid_web'];
 		}
 		if ($proc_work_result2[0]['work'] != null) {
 			$work_remaining_start = $proc_work_result2[0]['work'] - $proc_work_result2[0]['pc'] - $proc_work_result2[0]['pron'];
@@ -639,8 +639,8 @@ while ($i > 0) {
 	if ($proc_work_result3[0]['distinct_predb_matched'] != null) {
 		$distinct_predb_matched = $proc_work_result3[0]['distinct_predb_matched'];
 	}
-	if ($proc_work_result3[0]['requestid_inprogress'] != null) {
-		$requestid_inprogress = $proc_work_result3[0]['requestid_inprogress'];
+	if ($proc_work_result3[0]['requestid_local'] != null || $proc_work_result3[0]['requestid_web'] != null) {
+		$requestid_inprogress = $proc_work_result3[0]['requestid_local'] + $proc_work_result3[0]['requestid_web'];
 	}
 	if ($proc_work_result3[0]['requestid_matched'] != null) {
 		$requestid_matched = $proc_work_result3[0]['requestid_matched'];
@@ -1234,13 +1234,11 @@ while ($i > 0) {
 				}
 				$log = writelog($panes2[0]);
 				shell_exec("tmux respawnp -t${tmux_session}:2.0 'echo \"\033[38;5;${color}m\"; \
-						rm -rf $tmpunrar/*; \
 						$_python ${DIR}update/python/postprocess_threaded.py additional $log; date +\"%D %T\"; $_sleep $post_timer' 2>&1 1> /dev/null"
 				);
 			} else if ($post == 2 && $nfo_remaining_now > 0) {
 				$log = writelog($panes2[0]);
 				shell_exec("tmux respawnp -t${tmux_session}:2.0 ' \
-						rm -rf $tmpunrar/*; \
 						$_python ${DIR}update/python/postprocess_threaded.py nfo $log; date +\"%D %T\"; $_sleep $post_timer' 2>&1 1> /dev/null"
 				);
 			} else if (($post == 3) && (($nfo_remaining_now > 0) || ($work_remaining_now + $pc_releases_proc + $pron_remaining_now > 0))) {
@@ -1263,7 +1261,6 @@ while ($i > 0) {
 				}
 				$log = writelog($panes2[0]);
 				shell_exec("tmux respawnp -t${tmux_session}:2.0 ' \
-						rm -rf $tmpunrar/*; \
 						$_python ${DIR}update/python/postprocess_threaded.py additional $log; \
 						$_python ${DIR}update/python/postprocess_threaded.py nfo $log; date +\"%D %T\"; $_sleep $post_timer' 2>&1 1> /dev/null"
 				);
