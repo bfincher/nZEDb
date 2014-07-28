@@ -1,6 +1,6 @@
 <?php
 
-use nzedb\db\DB;
+use nzedb\db\Settings;
 use nzedb\utility;
 
 /**
@@ -23,10 +23,10 @@ class NZBExport
 	protected $retVal;
 
 	/**
-	 * @var DB
+	 * @var \nzedb\db\Settings
 	 * @access protected
 	 */
-	protected $db;
+	protected $pdo;
 
 	/**
 	 * @var NZB
@@ -55,9 +55,9 @@ class NZBExport
 	public function __construct($browser=false, $echo = true)
 	{
 		$this->browser = $browser;
-		$this->db = new DB();
-		$this->releases = new Releases();
-		$this->nzb = new NZB();
+		$this->pdo = new Settings();
+		$this->releases = new Releases(array('Settings' => $this->pdo, 'Groups' => null));
+		$this->nzb = new NZB($this->pdo);
 		$this->echoCLI = (!$this->browser && nZEDb_ECHOCLI && $echo);
 	}
 
@@ -119,13 +119,13 @@ class NZBExport
 				$this->echoOut('The group ID is not a number: ' . $params[3]);
 				return $this->returnValue();
 			}
-			$groups = $this->db->query('SELECT id, name FROM groups WHERE id = ' . $params[3]);
+			$groups = $this->pdo->query('SELECT id, name FROM groups WHERE id = ' . $params[3]);
 			if (count($groups) === 0) {
 				$this->echoOut('The group ID is not in the DB: ' . $params[3]);
 				return $this->returnValue();
 			}
 		} else {
-			$groups = $this->db->query('SELECT id, name FROM groups');
+			$groups = $this->pdo->query('SELECT id, name FROM groups');
 		}
 
 		$exported = $currentExport = 0;

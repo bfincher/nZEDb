@@ -1,6 +1,6 @@
 <?php
 
-use nzedb\db\DB;
+use nzedb\db\Settings;
 
 /**
  * Handles removing of various unwanted releases.
@@ -10,9 +10,14 @@ use nzedb\db\DB;
 class ReleaseRemover
 {
 	/**
-	 * @var DB
+	 * @var nzedb\db\Settings
 	 */
-	protected $db;
+	protected $pdo;
+
+	/**
+	 * @var NZB
+	 */
+	private $nzb;
 
 	/**
 	 * @var ColorCLI
@@ -125,12 +130,13 @@ class ReleaseRemover
 	 */
 	public function __construct($browser = false, $echo = true)
 	{
-		$this->db = new DB();
+		$this->pdo = new Settings();
 		$this->color = new ColorCLI();
 		$this->consoleTools = new ConsoleTools();
-		$this->releases = new Releases();
+		$this->releases = new Releases(array('Settings' => $this->pdo, 'Groups' => null));
+		$this->nzb = new NZB($this->pdo);
 
-		$this->mysql = ($this->db->dbSystem() === 'mysql' ? true : false);
+		$this->mysql = ($this->pdo->dbSystem() === 'mysql' ? true : false);
 		$this->like = ($this->mysql ? 'LIKE' : 'ILIKE');
 		$this->regexp = ($this->mysql ? 'REGEXP' : '~');
 		$this->query = '';
@@ -223,7 +229,7 @@ class ReleaseRemover
 		$this->blacklistID = '';
 
 		if (isset($blacklistID) && is_numeric($blacklistID)) {
-			$this->blacklistID = sprintf("id = %d", $blacklistID);
+			$this->blacklistID = sprintf("AND id = %d", $blacklistID);
 		}
 
 		$time = trim($time);
@@ -244,7 +250,7 @@ class ReleaseRemover
 				}
 				$this->crapTime =
 					' AND r.adddate > (NOW() - INTERVAL ' .
-					($this->mysql ? $time . ' HOUR)' : $this->db->escapeString($time . ' HOURS'));
+					($this->mysql ? $time . ' HOUR)' : $this->pdo->escapeString($time . ' HOURS'));
 				break;
 
 		}
@@ -341,7 +347,7 @@ class ReleaseRemover
 		$this->method = 'Gibberish';
 		$regex = sprintf("r.searchname %s '^[a-zA-Z0-9]{15,}$'", $this->regexp);
 		$this->query = sprintf(
-			"SELECT r.id, r.guid, r.searchname
+			"SELECT r.guid, r.searchname
 			FROM releases r
 			WHERE %s
 			AND r.nfostatus = 0
@@ -367,7 +373,7 @@ class ReleaseRemover
 		$this->method = 'Hashed';
 		$regex = sprintf("r.searchname %s '[a-zA-Z0-9]{25,}'", $this->regexp);
 		$this->query = sprintf(
-			"SELECT r.id, r.guid, r.searchname
+			"SELECT r.guid, r.searchname
 			FROM releases r
 			WHERE %s
 			AND r.nfostatus = 0
@@ -393,7 +399,7 @@ class ReleaseRemover
 		$this->method = 'Short';
 		$regex = sprintf("r.searchname %s '^[a-zA-Z0-9]{0,5}$'", $this->regexp);
 		$this->query = sprintf(
-			"SELECT r.id, r.guid, r.searchname
+			"SELECT r.guid, r.searchname
 			FROM releases r
 			WHERE %s
 			AND r.nfostatus = 0
@@ -418,7 +424,7 @@ class ReleaseRemover
 	{
 		$this->method = 'Executable';
 		$this->query = sprintf(
-			"SELECT r.id, r.guid, r.searchname
+			"SELECT r.guid, r.searchname
 			FROM releases r
 			INNER JOIN releasefiles rf ON rf.releaseid = r.id
 			WHERE r.searchname NOT %s %s
@@ -451,7 +457,7 @@ class ReleaseRemover
 	{
 		$this->method = 'Install.bin';
 		$this->query = sprintf(
-			"SELECT r.id, r.guid, r.searchname
+			"SELECT r.guid, r.searchname
 			FROM releases r
 			INNER JOIN releasefiles rf ON rf.releaseid = r.id
 			WHERE rf.name %s %s %s",
@@ -475,7 +481,7 @@ class ReleaseRemover
 	{
 		$this->method = 'Password.url';
 		$this->query = sprintf(
-			"SELECT r.id, r.guid, r.searchname
+			"SELECT r.guid, r.searchname
 			FROM releases r
 			INNER JOIN releasefiles rf ON rf.releaseid = r.id
 			WHERE rf.name %s %s %s",
@@ -499,7 +505,7 @@ class ReleaseRemover
 	{
 		$this->method = 'Passworded';
 		$this->query = sprintf(
-			"SELECT r.id, r.guid, r.searchname
+			"SELECT r.guid, r.searchname
 			FROM releases r
 			WHERE r.searchname %s %s
 			AND r.searchname NOT %s %s
@@ -552,7 +558,7 @@ class ReleaseRemover
 	{
 		$this->method = 'Size';
 		$this->query = sprintf(
-			"SELECT r.id, r.guid, r.searchname
+			"SELECT r.guid, r.searchname
 			FROM releases r
 			WHERE r.totalpart = 1
 			AND r.size < 2097152
@@ -586,7 +592,7 @@ class ReleaseRemover
 	{
 		$this->method = 'Huge';
 		$this->query = sprintf(
-			"SELECT r.id, r.guid, r.searchname
+			"SELECT r.guid, r.searchname
 			FROM releases r
 			WHERE r.totalpart = 1
 			AND r.size > 209715200 %s",
@@ -608,7 +614,7 @@ class ReleaseRemover
 	{
 		$this->method = 'Sample';
 		$this->query = sprintf(
-			"SELECT r.id, r.guid, r.searchname
+			"SELECT r.guid, r.searchname
 			FROM releases r
 			WHERE r.totalpart > 1
 			AND r.size < 40000000
@@ -651,7 +657,7 @@ class ReleaseRemover
 		$regex = "'[.]scr[$ \"]'";
 		$regex = sprintf("(rf.name %s %s OR r.name %s %s)", $this->regexp, $regex, $this->regexp, $regex);
 		$this->query = sprintf(
-			"SELECT r.id, r.guid, r.searchname
+			"SELECT r.guid, r.searchname
 			FROM releases r
 			LEFT JOIN releasefiles rf on rf.releaseid = r.id
 			WHERE %s %s",
@@ -671,21 +677,21 @@ class ReleaseRemover
 	 */
 	protected function removeBlacklist()
 	{
-		$status = sprintf('status = %d', Binaries::BLACKLIST_ENABLED);
+		$status = sprintf('AND status = %d', Binaries::BLACKLIST_ENABLED);
 		$where = '';
 
 		if (isset($this->blacklistID) && $this->blacklistID !== '' && $this->delete === false) {
 			$status = '';
 		}
 
-		$regexList = $this->db->query(
+		$regexList = $this->pdo->query(
 			sprintf(
 				'SELECT regex, id, groupname, msgcol
 				FROM binaryblacklist
-				WHERE %s %s AND optype = %d',
+				WHERE optype = %d %s %s',
+				Binaries::OPTYPE_BLACKLIST,
 				$this->blacklistID,
-				$status,
-				Binaries::OPTYPE_BLACKLIST
+				$status
 			)
 		);
 
@@ -694,7 +700,7 @@ class ReleaseRemover
 			foreach ($regexList as $regex) {
 
 				$regexSQL = $ftMatch = $regexMatch = $opTypeName = '';
-				$dbRegex = $this->db->escapeString($regex['regex']);
+				$dbRegex = $this->pdo->escapeString($regex['regex']);
 
 				// Match Regex beginning for long running foreign search
 				if ($this->crapTime === '' && substr($dbRegex, 2, 17) === 'brazilian|chinese') {
@@ -702,7 +708,7 @@ class ReleaseRemover
 					// Then substitute all pipes (|) with spaces for FT search and insert into query
 					$forBegin = strpos($dbRegex, 'brazilian');
 					$regexMatch = str_replace('|', ' ', substr($dbRegex, $forBegin, strpos($dbRegex, ')') - $forBegin));
-					$ftMatch = sprintf("MATCH (rs.name, rs.searchname) AGAINST (%s) AND", $this->db->escapeString($regexMatch));
+					$ftMatch = sprintf("MATCH (rs.name, rs.searchname) AGAINST (%s) AND", $this->pdo->escapeString($regexMatch));
 				}
 
 				else if ($this->crapTime === '' && substr($dbRegex, 7, 11) === 'bl|cz|de|es') {
@@ -743,7 +749,7 @@ class ReleaseRemover
 								)
 							)
 						);
-					$ftMatch = sprintf("MATCH (rs.name, rs.searchname) AGAINST (%s) AND", $this->db->escapeString($regexMatch));
+					$ftMatch = sprintf("MATCH (rs.name, rs.searchname) AGAINST (%s) AND", $this->pdo->escapeString($regexMatch));
 				}
 
 				else if ($this->crapTime === '' && substr($dbRegex, 8, 2) === '4u') {
@@ -751,7 +757,7 @@ class ReleaseRemover
 					// Then substitute all pipes (|) with quotation marks for FT search (quotes ignore min counts) and insert into query
 					$forBegin = strpos($dbRegex, '4u');
 					$regexMatch = str_replace('|', ' ', str_replace('nov[ a]+rip', 'nova', str_replace('4u.nl', '"4u" "nl"', substr($dbRegex, $forBegin, strpos($dbRegex, ')') - $forBegin))));
-					$ftMatch = sprintf("MATCH (rs.name, rs.searchname) AGAINST (%s) AND", $this->db->escapeString($regexMatch));
+					$ftMatch = sprintf("MATCH (rs.name, rs.searchname) AGAINST (%s) AND", $this->pdo->escapeString($regexMatch));
 				}
 
 				else if ($this->crapTime === '' && substr($dbRegex, 8, 5) === 'bd|dl') {
@@ -768,7 +774,7 @@ class ReleaseRemover
 					// Then substitute all pipes (|) with quotation marks for FT search (quotes exclude min counts) and insert into query
 					$forBegin = strpos($dbRegex, 'imageset');
 					$regexMatch = str_replace('|', ' ', substr($dbRegex, $forBegin, strpos($dbRegex, ')') - $forBegin));
-					$ftMatch = sprintf("MATCH (rs.name, rs.searchname) AGAINST (%s) AND", $this->db->escapeString($regexMatch));
+					$ftMatch = sprintf("MATCH (rs.name, rs.searchname) AGAINST (%s) AND", $this->pdo->escapeString($regexMatch));
 				}
 
 				else if ($this->crapTime === '' && substr($dbRegex, 1, 9) === 'hdnectar|') {
@@ -806,11 +812,11 @@ class ReleaseRemover
 				$groupID = '';
 				if (strtolower($regex['groupname']) !== 'alt.binaries.*') {
 
-					$groupIDs = $this->db->query(
+					$groupIDs = $this->pdo->query(
 						'SELECT id FROM groups WHERE name ' .
 						$this->regexp .
 						' ' .
-						$this->db->escapeString($regex['groupname'])
+						$this->pdo->escapeString($regex['groupname'])
 					);
 
 					$groupIDCount = count($groupIDs);
@@ -844,7 +850,7 @@ class ReleaseRemover
 				"%s", $this->method, $blType, $opTypeName, $ftUsing));
 
 				$this->query = sprintf(
-					"SELECT r.id, r.guid, r.searchname
+					"SELECT r.guid, r.searchname
 					FROM releasesearch rs LEFT JOIN releases r ON rs.releaseid = r.id %s %s %s", $regexSQL, $groupID, $this->crapTime
 				);
 
@@ -867,7 +873,7 @@ class ReleaseRemover
 	 */
 	protected function removeBlacklistFiles()
 	{
-		$allRegex = $this->db->query(
+		$allRegex = $this->pdo->query(
 			sprintf(
 				'SELECT regex, id, groupname
 				FROM binaryblacklist
@@ -885,7 +891,7 @@ class ReleaseRemover
 			foreach ($allRegex as $regex) {
 
 				$regexSQL = sprintf("LEFT JOIN releasefiles rf ON r.id = rf.releaseid
-				WHERE rf.name {$this->regexp} %s ", $this->db->escapeString($regex['regex']));
+				WHERE rf.name {$this->regexp} %s ", $this->pdo->escapeString($regex['regex']));
 
 				if ($regexSQL === '') {
 					continue;
@@ -894,11 +900,11 @@ class ReleaseRemover
 				// Get the group ID if the regex is set to work against a group.
 				$groupID = '';
 				if (strtolower($regex['groupname']) !== 'alt.binaries.*') {
-					$groupIDs = $this->db->query(
+					$groupIDs = $this->pdo->query(
 						'SELECT id FROM groups WHERE name ' .
 						$this->regexp .
 						' ' .
-						$this->db->escapeString($regex['groupname'])
+						$this->pdo->escapeString($regex['groupname'])
 					);
 					$groupIDCount = count($groupIDs);
 					if ($groupIDCount === 0) {
@@ -918,7 +924,7 @@ class ReleaseRemover
 
 				$this->method = 'Blacklist ' . $regex['id'];
 				$this->query = sprintf(
-					"SELECT r.id, r.guid, r.searchname
+					"SELECT r.guid, r.searchname
 					FROM releases r %s %s %s", $regexSQL, $groupID, $this->crapTime
 				);
 
@@ -957,12 +963,12 @@ class ReleaseRemover
 			Category::CAT_XXX_XVID,
 			Category::CAT_XXX_OTHER
 		);
-		$codeclike = sprintf("UNION SELECT r.id, r.guid, r.searchname FROM releases r
+		$codeclike = sprintf("UNION SELECT r.guid, r.searchname FROM releases r
 			LEFT JOIN releasefiles rf ON r.id = rf.releaseid
 			WHERE %s rf.name %s '%s' OR rf.name %s '%s'", $categories, $this->like, $codec, $this->like, $iferror
 			);
 		$this->query = sprintf(
-			"SELECT r.id, r.guid, r.searchname FROM releases
+			"SELECT r.guid, r.searchname FROM releases
 			r INNER JOIN releasefiles rf ON (rf.releaseid = r.id)
 			WHERE %s %s %s %s %s", $categories, $regex, $this->crapTime, $codeclike, $this->crapTime
 		);
@@ -981,7 +987,7 @@ class ReleaseRemover
 		$deletedCount = 0;
 		foreach ($this->result as $release) {
 			if ($this->delete) {
-				$this->releases->fastDelete($release['id'], $release['guid']);
+				$this->releases->deleteSingle($release['guid'], $this->nzb);
 				if ($this->echoCLI) {
 					echo $this->color->primary('Deleting: ' . $this->method . ': ' . $release['searchname']);
 				}
@@ -1003,7 +1009,7 @@ class ReleaseRemover
 	protected function checkSelectQuery()
 	{
 		// Run the query, check if it picked up anything.
-		$result = $this->db->query($this->cleanSpaces($this->query));
+		$result = $this->pdo->query($this->cleanSpaces($this->query));
 		if (count($result) <= 0) {
 			if ($this->method === 'userCriteria') {
 				$this->error = 'No releases were found to delete, try changing your criteria.';
@@ -1042,7 +1048,7 @@ class ReleaseRemover
 				case 'fromname':
 					switch ($args[1]) {
 						case 'equals':
-							return ' AND fromname = ' . $this->db->escapeString($args[2]);
+							return ' AND fromname = ' . $this->pdo->escapeString($args[2]);
 						case 'like':
 							return ' AND fromname ' . $this->formatLike($args[2], 'fromname');
 					}
@@ -1050,14 +1056,14 @@ class ReleaseRemover
 				case 'groupname':
 					switch ($args[1]) {
 						case 'equals':
-							$group = $this->db->queryOneRow('SELECT id FROM groups WHERE name = ' . $this->db->escapeString($args[2]));
+							$group = $this->pdo->queryOneRow('SELECT id FROM groups WHERE name = ' . $this->pdo->escapeString($args[2]));
 							if ($group === false) {
 								$this->error = 'This group was not found in your database: ' . $args[2] . PHP_EOL;
 								break;
 							}
 							return ' AND group_id = ' . $group['id'];
 						case 'like':
-							$groups = $this->db->query('SELECT id FROM groups WHERE name ' . $this->formatLike($args[2], 'name'));
+							$groups = $this->pdo->query('SELECT id FROM groups WHERE name ' . $this->formatLike($args[2], 'name'));
 							if (count($groups) === 0) {
 								$this->error = 'No groups were found with this pattern in your database: ' . $args[2] . PHP_EOL;
 								break;
@@ -1075,7 +1081,7 @@ class ReleaseRemover
 				case 'guid':
 					switch ($args[1]) {
 						case 'equals':
-							return ' AND guid = ' . $this->db->escapeString($args[2]);
+							return ' AND guid = ' . $this->pdo->escapeString($args[2]);
 						default:
 							break;
 					}
@@ -1083,7 +1089,7 @@ class ReleaseRemover
 				case 'name':
 					switch ($args[1]) {
 						case 'equals':
-							return ' AND name = ' . $this->db->escapeString($args[2]);
+							return ' AND name = ' . $this->pdo->escapeString($args[2]);
 						case 'like':
 							return ' AND name ' . $this->formatLike($args[2], 'name');
 						default:
@@ -1093,7 +1099,7 @@ class ReleaseRemover
 				case 'searchname':
 					switch ($args[1]) {
 						case 'equals':
-							return ' AND searchname = ' . $this->db->escapeString($args[2]);
+							return ' AND searchname = ' . $this->pdo->escapeString($args[2]);
 						case 'like':
 							return ' AND searchname ' . $this->formatLike($args[2], 'searchname');
 						default:

@@ -12,6 +12,64 @@ class Utility
 	 */
 	const PATH_REGEX = '(?P<drive>[A-Za-z]:|)(?P<path>[/\w.-]+|)';
 
+	/**
+	 * Replace all white space chars for a single space.
+	 *
+	 * @param string $text
+	 *
+	 * @return string
+	 *
+	 * @static
+	 * @access public
+	 */
+	static public function collapseWhiteSpace($text)
+	{
+		// Strip leading/trailing white space.
+		return trim(
+		// Replace 2 or more white space for a single space.
+			preg_replace('/\s{2,}/',
+						 ' ',
+				// Replace all literal and non literal new lines and carriage returns.
+						 str_replace(array("\n", '\n', "\r", '\r'), ' ', $text)
+			)
+		);
+	}
+
+	/**
+	 * Removes the preceeding or proceeding portion of a string
+	 * relative to the last occurrence of the specified character.
+	 * The character selected may be retained or discarded.
+	 *
+	 * @param string $character      the character to search for.
+	 * @param string $string         the string to search through.
+	 * @param string $side           determines whether text to the left or the right of the character is returned.
+	 *                               Options are: left, or right.
+	 * @param bool   $keep_character determines whether or not to keep the character.
+	 *                               Options are: true, or false.
+	 *
+	 * @return string
+	 */
+	static public function cutStringUsingLast($character, $string, $side, $keep_character = true)
+	{
+		$offset       = ($keep_character ? 1 : 0);
+		$whole_length = strlen($string);
+		$right_length = (strlen(strrchr($string, $character)) - 1);
+		$left_length  = ($whole_length - $right_length - 1);
+		switch ($side) {
+			case 'left':
+				$piece = substr($string, 0, ($left_length + $offset));
+				break;
+			case 'right':
+				$start = (0 - ($right_length + $offset));
+				$piece = substr($string, $start);
+				break;
+			default:
+				$piece = false;
+				break;
+		}
+		return ($piece);
+	}
+
 	static public function getDirFiles (array $options = null)
 	{
 		$defaults = array(
@@ -97,17 +155,16 @@ class Utility
 
 		$pdo = new \nzedb\db\Settings();
 		$patch = $pdo->getSetting(['section' => '', 'subsection' => '', 'name' => 'sqlpatch']);
-		$ver = $versions->versions->db;
+		$ver = $versions->versions->sql->file;
 
 		// Check database patch version
 		if ($patch < $ver) {
+			$message = "\nYour database is not up to date. Reported patch levels\n   Db: $patch\nfile: $ver\nPlease update.\n php " .
+				nZEDb_ROOT . "cli/update_db.php true\n";
 			if (self::isCLI()) {
-				echo (new \ColorCLI())->error(
-					"\nYour database is not up to date. Reported patch levels\n Db: $patch\n file: $ver\nPlease update.\n php " .
-					 nZEDb_LIB .  "db/DbUpdate.php 1\n"
-				);
-				throw new \RuntimeException("Reported patch versions do not match. Need to update database?");
+				echo (new \ColorCLI())->error($message);
 			}
+			throw new \RuntimeException($message);
 		}
 
 		return true;
@@ -168,28 +225,6 @@ class Utility
 		return $text;
 	}
 
-	/**
-	 * Replace all white space chars for a single space.
-	 *
-	 * @param string $text
-	 *
-	 * @return string
-	 *
-	 * @static
-	 * @access public
-	 */
-	static public function collapseWhiteSpace($text)
-	{
-		// Strip leading/trailing white space.
-		return trim(
-			// Replace 2 or more white space for a single space.
-			preg_replace('/\s{2,}/', ' ',
-				// Replace all literal and non literal new lines and carriage returns.
-				str_replace(array("\n", '\n', "\r", '\r'), ' ', $text)
-			)
-		);
-	}
-
 	static public function trailingSlash($path)
 	{
 		if (substr($path, strlen($path) - 1) != '/') {
@@ -197,41 +232,6 @@ class Utility
 		}
 		return $path;
 	}
-
-	/**
-	 * Removes the preceeding or proceeding portion of a string
-	 * relative to the last occurrence of the specified character.
-	 * The character selected may be retained or discarded.
-	 *
-	 * @param string $character the character to search for.
-	 * @param string $string the string to search through.
-	 * @param string $side determines whether text to the left or the right of the character is returned.
-	 * Options are: left, or right.
-	 * @param bool $keep_character determines whether or not to keep the character.
-	 * Options are: true, or false.
-	 * @return string
-	 */
-	static public function cutStringUsingLast($character, $string, $side, $keep_character=true)
-	{
-		$offset = ($keep_character ? 1 : 0);
-		$whole_length = strlen($string);
-		$right_length = (strlen(strrchr($string, $character)) - 1);
-		$left_length = ($whole_length - $right_length - 1);
-		switch($side) {
-			case 'left':
-				$piece = substr($string, 0, ($left_length + $offset));
-				break;
-			case 'right':
-				$start = (0 - ($right_length + $offset));
-				$piece = substr($string, $start);
-				break;
-			default:
-				$piece = false;
-				break;
-		}
-		return($piece);
-	}
-
 }
 
 /**

@@ -15,7 +15,7 @@ if (!isset($argv[1]) || ( $argv[1] != "all" && $argv[1] != "full" && !is_numeric
 		);
 }
 
-use nzedb\db\DB;
+use nzedb\db\Settings;
 $reqidlocal = new RequestIDStandalone();
 
 $reqidlocal->standaloneLocalLookup($argv);
@@ -51,7 +51,7 @@ class RequestIDStandalone
 	/**
 	 * @var nzedb\db\DB
 	 */
-	protected $db;
+	protected $pdo;
 
 	/**
 	 * @var ConsoleTools
@@ -93,7 +93,7 @@ class RequestIDStandalone
 	{
 		$this->echoOutput = ($echoOutput && nZEDb_ECHOCLI);
 		$this->category = new Categorize();
-		$this->db = new DB();
+		$this->pdo = new Settings();
 		$this->groups = new Groups();
 		$this->namefixer = new NameFixer();
 		$this->consoleTools = new ConsoleTools();
@@ -110,9 +110,9 @@ class RequestIDStandalone
 
 		$timestart = TIME();
 		$counted = $counter = 0;
-		($argv[2] === 'show' ? $this->show = 1 : $this->show = 0);
+		(isset($argv[2]) && $argv[2] === 'show' ? $this->show = 1 : $this->show = 0);
 
-		$res = $this->db->queryDirect($this->_buildWorkQuery($argv));
+		$res = $this->pdo->queryDirect($this->_buildWorkQuery($argv));
 
 		if ($res !== false) {
 			$total = $res->rowCount();
@@ -125,11 +125,6 @@ class RequestIDStandalone
 			foreach ($res as $row) {
 				$this->requestID = 0;
 				$this->requestID = $this->_siftReqId($row['name']);
-
-				if ($this->requestID === self::REQID_ZERO) {
-					$this->_requestIdNotFound($row['id'], $this->requestID);
-					continue;
-				}
 
 				$this->newTitle = '';
 
@@ -219,7 +214,7 @@ class RequestIDStandalone
 	 */
 	protected function _enumerateWork($total)
 	{
-		$reqidcount = $this->db->queryOneRow('SELECT COUNT(*) AS count FROM predb WHERE requestid > 0');
+		$reqidcount = $this->pdo->queryOneRow('SELECT COUNT(*) AS count FROM predb WHERE requestid > 0');
 		echo $this->c->header(PHP_EOL . "Comparing " . number_format($total) . " releases against " . number_format($reqidcount['count']) . " Local requestID's." . PHP_EOL);
 		sleep(2);
 	}
@@ -233,51 +228,51 @@ class RequestIDStandalone
 	 */
 	protected function _multiLookup($groupName, $oldName)
 	{
-		switch ($groupName) {
-			case 'alt.binaries.boneless':
-				$regex = '/^\[ ?#?scnzb(\@?ef{1,2}net)? ?\][ -]?\[\d+\][ -]\[?\s*(?P<title>.+?)\s*\]?[ -]\[\d+\/\d+\][ -].*/i';
-				break;
-			case 'alt.binaries.sounds.flac':
-				$regex = '/^\[\d+\](-\[\w+\]-|-)?\[ ?#?a\.?b(inaries)?\.?flac(\@?ef{1,2}net)? ?\]-\[\s*(?P<title>.+?)\s*\]-\[\d+\/\d+\]/i';
-				break;
-			case 'alt.binaries.moovee':
-				$regex = '/^\[\d+\](-\[\w+\]-|-)?\[ ?#?a\.b(inaries)?\.moovee(\@?ef{1,2}net)? ?\]-?\[\s*(?P<title>[^\d\/\d]+?)\s*\]?-\[\d+\/\d+\]/i';
-				break;
-			case 'alt.binaries.teevee':
-				$regex = '/^\[\d+\]-\[FULL\]-\[ ?#?a\.b(inaries)?\.teevee(\@?ef{1,2}net)? ?\]-\[\s*(?P<title>.+?)\s*\]-\[\d+\/\d+\]/i';
-				break;
-			case 'alt.binaries.erotica':
-				$regex = '/^\[\d+\](-\[\w+\]-|-)?\[ ?#?a\.b(inaries)?\.erotica(\@?ef{1,2}net)? ?\]-\[\s*(?P<title>.+?)\s*\](-\[\d+\/\d+\])?/i';
-				break;
-			case 'alt.binaries.mom':
-				$regex = '/^(\[.*\]-)?\[\d+\](-\[\w+\]-|-)?\[ ?#?a\.b(inaries)?\.foreign(\@?ef{1,2}net)? ?\]-\[\s*(?P<title>.+?)\s*\]-\[\d+\/\d+\]/i';
-				break;
-			case 'alt.binaries.hdtv.x264':
-				$regex = '/^\[\d+\]-\[ ?#?a\.b(inaries)?\.hdtv\.x264(\@?ef{1,2}net)? ?\][ -](\[\w+\][ -])?(?P<title>.+?)[ -](\[\d+\/\d+\]|\".*\")/i';
-				break;
-			case 'alt.binaries.inner-sanctum':
-				$regex = '/^\[\d+\]-\[.+?\]-\[ ?#?a\.b(inaries)?\.inner-?sanctum(\@?ef{1,2}net)? ?\]-\[\s*(?P<title>.+?)\s*\][ -](\[[\w ]+\][ -])?\[\d+\/\d+\]/i';
-				break;
+		$this->oldName = $oldName;
+		$this->groupName = $groupName;
+
+		$regex1 =
+				'/^\[\s*\d+\s*\][ -]+(\[(ISO|FULL|PART|MP3|0DAY|android)\][ -]+)?\[(alt-?bin| ?#?a[a-z0-9. -]+)((@?ef{1,2})?net)? ?\]' .
+				'[ -]+(\[(ISO|FULL|PART|MP3|0DAY|android)\][ -]+)?(\[\s*\d+\s*\][ -]+)?(\[\d+\/\d+\][ -]+)?(\"|\[)\s*' .
+				'(?P<title>.+?)(\.+(vol\d+\+\d+\.)?(-cd\d\.)?(avi|jpg|nzb|m3u|mkv|par2|part\d+|nfo|sample|sfv|rar|r?\d{1,3}|\d+|zip)*)?\s*(\"|\])' .
+				'[ -]*(\[\d+\/\d+\][ -]*)?((\"\s*(?P<filename1>.+?)([-.]sample)?([-.]cd(\d|[ab]))?(\.+(vol\d+\+\d+\.)?([-.]d\d\.)?([-.]part\d+)?' .
+				'(avi|jpg|nzb|m3u|mkv|par2|nfo|sample|sfv|rar|r?\d{1,3}|\d+|zip)*)?\s*\")| - (?P<filename2>.+?) (yEnc|\(\d+\/\d+\)))?.*/i'
+		;
+
+		$regex2 =
+				'/^\[\s*\d+\s*\].*' .
+				'\"\s*(?P<title>.+?)(\.+(vol\d+\+\d+\.)?(-cd\d\.)?' .
+				'(avi|jpg|nzb|m3u|mkv|par2|part\d+|nfo|sample|sfv|rar|r?\d{1,3}|\d+|zip)*)\s*\".*/i'
+		;
+
+		switch (true) {
+			case preg_match($regex1, $this->oldName, $matches):
+			case preg_match($regex2, $this->oldName, $matches):
+				$this->run = $this->pdo->queryOneRow(
+								sprintf(
+									"SELECT id, title FROM predb " .
+									"WHERE title = %s OR filename = %s %s",
+									$this->pdo->escapeString($matches['title']),
+									$this->pdo->escapeString($matches['title']),
+									(
+										isset($matches['filename1']) && $matches['filename1'] !== ''
+										? 'OR filename = ' . $this->pdo->escapeString($matches['filename1'])
+										:
+										(
+											isset($matches['filename2']) && $matches['filename2'] !== ''
+											? 'OR filename = ' . $this->pdo->escapeString($matches['filename2'])
+											: ''
+										)
+									)
+								)
+				);
+				if ($this->run !== false) {
+					return array('title' => $this->run['title'], 'id' => $this->run['id']);
+				}
+				continue;
 			default:
 				return false;
 		}
-		if (preg_match($regex, $oldName, $matches)) {
-			var_dump($matches['title']);
-			$this->run = $this->db->queryOneRow(
-							sprintf(
-								"SELECT id, title FROM predb " .
-								"WHERE title = %s OR filename = %s",
-								$this->db->escapeString($matches['title']),
-								$this->db->escapeString($matches['title'])
-							)
-			);
-			if ($this->run !== false) {
-				return array('title' => $this->run['title'], 'id' => $this->run['id']);
-			} else {
-				return false;
-			}
-		}
-		return false;
 	}
 
 	/**
@@ -294,7 +289,7 @@ class RequestIDStandalone
 			return;
 		}
 
-		$this->db->queryExec(
+		$this->pdo->queryExec(
 			sprintf(
 				'UPDATE releases SET reqidstatus = %d ' .
 				'WHERE id = %d',
@@ -313,8 +308,7 @@ class RequestIDStandalone
 	protected function _siftReqId($releaseName)
 	{
 		switch (true) {
-			case preg_match('/\[scnzbefnet\]\[(?P<reqid>\d+)\]/', $releaseName, $requestID):
-				var_dump($requestID['reqid']);
+			case preg_match('/\[ ?#?scnzb@?efnet ?\]\[(?P<reqid>\d+)\]/', $releaseName, $requestID):
 				if ((int) $requestID['reqid'] > 0) {
 					return (int) $requestID['reqid'];
 				} else {
@@ -360,7 +354,7 @@ class RequestIDStandalone
 				return false;
 		}
 		$groupid = $groups->getIDByName($groupName);
-		$this->run = $this->db->queryOneRow(
+		$this->run = $this->pdo->queryOneRow(
 						sprintf(
 							"SELECT id, title FROM predb " .
 							"WHERE requestid = %d AND group_id = %d",
@@ -388,8 +382,12 @@ class RequestIDStandalone
 		$this->oldName = $oldName;
 		$this->requestID = $requestID;
 
+		if ((int) $this->requestID == -2) {
+			return $this->_multiLookup($this->groupName, $this->oldName);
+		}
+
 		$groupid = $this->groups->getIDByName($groupName);
-		$this->run = $this->db->queryDirect(
+		$this->run = $this->pdo->queryDirect(
 							sprintf(
 								'SELECT id, title FROM predb ' .
 								'WHERE requestid = %d AND group_id = %d',
@@ -400,15 +398,14 @@ class RequestIDStandalone
 		if ($this->run !== false) {
 			$total = $this->run->rowCount();
 			switch ((int) $total) {
-				case '0':
-					return false;
-				case '1':
+				case 1:
 					foreach ($this->run as $row) {
 						if (preg_match('/s\d+/i', $row['title']) && !preg_match('/s\d+e\d+/i', $row['title'])) {
 							return false;
 						}
 						return array('title' => $row['title'], 'id' => $row['id']);
 					}
+					continue;
 				default:
 					//Prevents multiple Pre releases with the same requestid/group from being renamed to the same Pre
 					return $this->_multiLookup($this->groupName, $this->oldName);
@@ -438,23 +435,23 @@ class RequestIDStandalone
 		$this->show = $show;
 
 		if ($determinedcat == $row['categoryid']) {
-			$this->run = $this->db->queryExec(
+			$this->run = $this->pdo->queryExec(
 							sprintf(
 								'UPDATE releases SET preid = %d, reqidstatus = 1, isrenamed = 1, iscategorized = 1, searchname = %s ' .
 								'WHERE id = %d',
 								$preid,
-								$this->db->escapeString($title),
+								$this->pdo->escapeString($title),
 								$row['id']
 							)
 			);
 		} else {
-			$this->run = $this->db->queryExec(
+			$this->run = $this->pdo->queryExec(
 							sprintf(
 								'UPDATE releases SET rageid = -1, seriesfull = NULL, season = NULL, episode = NULL, tvtitle = NULL, tvairdate = NULL, ' .
 								'imdbid = NULL, musicinfoid = NULL, consoleinfoid = NULL, bookinfoid = NULL, anidbid = NULL, ' .
 								'preid = %d, reqidstatus = 1, isrenamed = 1, iscategorized = 1, searchname = %s, categoryid = %d WHERE id = %d',
 								$preid,
-								$this->db->escapeString($title),
+								$this->pdo->escapeString($title),
 								$determinedcat,
 								$row['id']
 							)
