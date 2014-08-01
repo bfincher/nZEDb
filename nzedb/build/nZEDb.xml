@@ -1,4 +1,1029 @@
+ 2586  cd /var/log
+ 2587  ls -ltr
+ 2588  tail thumbnail.log
+ 2589  crontab -e
+ 2590  ssh root@192.168.1.111
+ 2591  ping vweid
+ 2592  ssh root@192.168.1.120
+ 2593  cd nzedb_tmp
+ 2594  g pu
+ 2595  g co master
+ 2596  g pu
+ 2597  g status
+ 2598  ls nzbfiles
+ 2599  g co brian
+ 2600  g status
+ 2601  g log .gitignore
+ 2602  g show 06863b694aa987ff4d9a858e5b1227a50ccc64db
+ 2603  g log .gitignore
+ 2604  g status
+ 2605  ls nzbfiles
+ 2606  find nzbfiles
+ 2607  cd ..
+ 2608  cd nzedb
+ 2609  G STATUS
+ 2610  g status
+ 2611  g diff misc/update/nix/tmux/start.php
+ 2612  g co misc/update/nix/tmux/start.php
+ 2613  g diff nzedb/controllers/NNTP.php
+ 2614  g co nzedb/controllers/NNTP.php
+ 2615  g status
+ 2616  ls nzbfiles
+ 2617  vi .gitignore
+ 2618  g status
+ 2619  g commit -am "ignore nzbfiles dir"
+ 2620  g push
+ 2621  crontab -e
+ 2622  cd nzedb
+ 2623  cd misc/cron
+ 2624  ls
+ 2625  cat retry_count
+ 2626  ./binup.sh&
+ 2627  cd /var/log/nzedb
+ 2628  ls -ltr
+ 2629  tail -f binup.log
+ 2630  cd nzedb_tmp
+ 2631  g co master
+ 2632  g status
+ 2633  g pu
+ 2634  g co brian
+ 2635  g pull
+ 2636  g status
+ 2637  g tag
+ 2638  date
+ 2639  g tag before_merge_2014_05_15
+ 2640  g merge master
+ 2641  g push
+ 2642  cd
+ 2643  ps -ef | grep php
+ 2644  cd /var/log/nzedb
+ 2645  ls -ltr
+ 2646  tail -f update.log
+ 2647  ls -ltr
+ 2648  tail -f update.log
+ 2649  ps -ef | grep php
+ 2650  cd
+ 2651  cd nzedb
+ 2652  g pull
+ 2653  vi Changelog
+ 2654  cd misc/testing/DB
+ 2655  php patchDB.php
+ 2656  cd ../..
+ 2657  cd cron
+ 2658  ls
+ 2659  ./binup.sh&
+ 2660  cd /var/www/nzedb
+ 2661  ls -ltr
+ 2662  cd /var/log/nzedb
+ 2663  ls -ltr
+ 2664  tail -f binup.log
+ 2665  tail -f relup.log
+ 2666  tail -f update.log
+ 2667  cd
+ 2668  cd nzedb
+ 2669  vi Changelog
+ 2670  php misc/update/requestid.php full
+ 2671  vi Changelog
+ 2672  cd misc/update
+ 2673  ls
+ 2674  cd ..
+ 2675  ls
+ 2676  cd testing
+ 2677  ls
+ 2678  cd Release
+ 2679  ls
+ 2680  php removeCrapReleases.php
+ 2681  php removeCrapReleases.php false Display full
+ 2682  php removeCrapReleases.php false
+ 2683  php removeCrapReleases.php true full size
+ 2684  exit
+ 2685  cd nzedb_tmp
+ 2686  g co master
+ 2687  g pu
+ 2688  vi Changelog
+ 2689  g push
+ 2690  g co brian
+ 2691  g tag
+ 2692  g tag before_merge_2014_05_20
+ 2693  g merge master
+ 2694  crontab -e
+ 2695  cd
+ 2696  cd nzedb
+ 2697  g pull
+ 2698  cd misc/testing/DB
+ 2699  php patchDB.php
+ 2700  cd ../..
+ 2701  cd ..
+ 2702  php nzedb/db/DbUpdate.php 1
+ 2703  g pull
+ 2704  cd
+ 2705  cd nzedb_tmp
+ 2706  g merge master
+ 2707  g push
+ 2708  cd
+ 2709  cd nzedb
+ 2710  g pull
+ 2711  php nzedb/db/DbUpdate.php 1
+ 2712  cd misc/cron
+ 2713  ./binup.sh&
+ 2714  cd /var/log/nzedb
+ 2715  tail -f binup.log
+ 2716  tail -f relup.log
+ 2717  tail -f update.log
+ 2718  crontab -e
+ 2719  cd nzedb_tmp
+ 2720  g co master
+ 2721  g status
+ 2722  ls nzbfiles
+ 2723  ls -la nzbfiles
+ 2724  rm -rf nzbfiles
+ 2725  g pu
+ 2726  crontab -e
+ 2727  cd nzedb/misc/testing/DB
+ 2728  ls
+ 2729  php convert_mysql_tables.php
+ 2730  php convert_mysql_tables.php dmyisam
+ 2731  crontab -e
+ 2732  cd
+ 2733  cd nzedb_tmp
+ 2734  g pu
+ 2735  g log nzedb/utility/Utility.php
+ 2736  cd /var/log/nzedb
+ 2737  tail -f binup.log
+ 2738  ls -ltr
+ 2739  tail -f update.log
+ 2740  tail -f relup.log
+ 2741  tail -f update.log
+ 2742  cd nzedb_tmp
+ 2743  g pu
+ 2744  g log
+ 2745  g show 34d85011c8f9675bac319f012f945104878f3411
+ 2746  cd /var/log/nzedb
+ 2747  ls -ltr
+ 2748  tail -f update.log
+ 2749  crontab -e
+ 2750  cd nzedb_tmp
+ 2751  g pu
+ 2752  cd nzedb_tmp
+ 2753  ls -ltr
+ 2754  g pu
+ 2755  vi Changelog
+ 2756  g co brian
+ 2757  g tag
+ 2758  date
+ 2759  g describe
+ 2760  g co master
+ 2761  g describe
+ 2762  g co brian
+ 2763  g tag
+ 2764  date
+ 2765  g tag before_merge_2014_05_30
+ 2766  g merge master
+ 2767  g push
+ 2768  cd
+ 2769  cd nzedb
+ 2770  g pull
+ 2771  crontab -e
+ 2772  g pull
+ 2773  cd misc/testing/DB
+ 2774  php patchDB.php
+ 2775  ls -ltr
+ 2776  cd ..
+ 2777  cd cron
+ 2778  ./binup.sh&
+ 2779  cd /var/www/nzedb
+ 2780  ls -ltr
+ 2781  cd /var/log/nzedb
+ 2782  tail -f binup.log
+ 2783  tail -f relup.log
+ 2784  tail -f update.log
+ 2785  crontab -e
+ 2786  ls -ltr
+ 2787  sudo init 0
+ 2788  cd nzedb_tmp
+ 2789  g co master
+ 2790  g pu
+ 2791  g push
+ 2792  exit
+ 2793  cd nzedb_tmp
+ 2794  g pu
+ 2795  cd nzedb_tmp
+ 2796  g pu
+ 2797  vi Changelog
+ 2798  g co brian
+ 2799  date
+ 2800  g tag before_merge_2014_06_04
+ 2801  g push
+ 2802  g merge master
+ 2803  g status
+ 2804  vi nzedb/controllers/Category.php
+ 2805  g status
+ 2806  g add nzedb/controllers/Category.php
+ 2807  g status
+ 2808  g commit
+ 2809  g status
+ 2810  g push
+ 2811  cd
+ 2812  cd nzedb
+ 2813  g pull
+ 2814  cd misc/testing/DB
+ 2815  php patchDB.php
+ 2816  /usr/bin/git
+ 2817  which git
+ 2818  sudo apt-get install git
+ 2819  php patchDB.php
+ 2820  cd ../..
+ 2821  cd cron
+ 2822  ./binup.sh
+ 2823  bg
+ 2824  top
+ 2825  ls -ltr
+ 2826  cat count.txt
+ 2827  cat retry_count
+ 2828  top
+ 2829  cat retry_count
+ 2830  vi retry_count
+ 2831  cd ..
+ 2832  cd nzedb_tmp
+ 2833  g co master
+ 2834  cd ..
+ 2835  diff nzedb/nzedb/controllers/Releases.php nzedb_tmp/nzedb/controllers/Releases.php
+ 2836  vi nzedb/nzedb/controllers/Releases.php
+ 2837  diff nzedb/nzedb/controllers/Category.php nzedb_tmp/nzedb/controllers
+ 2838  diff -wb nzedb/nzedb/controllers/Category.php nzedb_tmp/nzedb/controllers
+ 2839  vi nzedb/nzedb/controllers/Releases.php
+ 2840  history
+ 2841  diff -wb nzedb/nzedb/controllers/Category.php nzedb_tmp/nzedb/controllers
+ 2842  vi nzedb/nzedb/controllers/Releases.php
+ 2843  vi /var/www/nzedb/nzedb/controllers/Categorize.php
+ 2844  diff /var/www/nzedb/nzedb/controllers/Categorize.php /var/www/nzedb_tmp/nzedb/controllers/Categorize.php
+ 2845  g branch nzedb_tmp
+ 2846  cd nzedb_tmp
+ 2847  cd ../nzedb
+ 2848  cd ../nzedb_tmp
+ 2849  g pu
+ 2850  cd
+ 2851  cd nzedb
+ 2852  cd misc/cron
+ 2853  vi count.txt
+ 2854  vi retry_count
+ 2855  cd ../..
+ 2856  cd ../nzedb_tmp
+ 2857  g pu
+ 2858  cd nzedb_tmp
+ 2859  g pu
+ 2860  cd /var/log/nzedb
+ 2861  ls -ltr
+ 2862  tail -f binup.log
+ 2863  ls -ltr
+ 2864  vi update.log
+ 2865  vi relup.log
+ 2866  tail -f binup.log
+ 2867  tail -f relup.log
+ 2868  cd nzedb_tmp
+ 2869  g pu
+ 2870  exit
+ 2871  cd nzedb_tmp
+ 2872  g pu
+ 2873  vi Changelog
+ 2874  g co brian
+ 2875  g tag
+ 2876  date
+ 2877  g tag before_merge_2014_06_10
+ 2878  g merge master
+ 2879  vi .gitignore
+ 2880  g status
+ 2881  g add .gitignore
+ 2882  g commit
+ 2883  g push
+ 2884  cd
+ 2885  ps -ef | grep php
+ 2886  ls
+ 2887  pwd
+ 2888  cd nzedb
+ 2889  g pull
+ 2890  cd misc/testing/DB
+ 2891  php patchDB.php
+ 2892  cd ../..
+ 2893  cd cron
+ 2894  ./binup.sh&
+ 2895  cd /var/log/nzedb
+ 2896  ls -ltr
+ 2897  tail -f binup.log
+ 2898  tail -f relup.log
+ 2899  tail -f update.log
+ 2900  ls -ltr
+ 2901  tail -f update.log
+ 2902  cd nzedb_tmp
+ 2903  g co master
+ 2904  g pu
+ 2905  g push
+ 2906  exit
+ 2907  cd nzedb_tmp
+ 2908  g pu
+ 2909  exit
+ 2910  cd nzedb_tmp
+ 2911  g pu
+ 2912  exit
+ 2913  cd nzedb_tmp
+ 2914  g pu
+ 2915  vi Changelog
+ 2916  g co brian
+ 2917  g tag
+ 2918  date
+ 2919  g tag before_merge_2014_06_16
+ 2920  g merge master
+ 2921  g push
+ 2922  ps -ef | grep php
+ 2923  cd
+ 2924  cd nzedb
+ 2925  g pull
+ 2926  cd misc/testing/DB
+ 2927  php patchDB.php
+ 2928  top
+ 2929  cd ../../
+ 2930  cd cron
+ 2931  ls
+ 2932  ./binup.sh&
+ 2933  cd /var/log/nzedb
+ 2934  ls -ltr
+ 2935  tail -f binup.log
+ 2936  tail -f relup.log
+ 2937  tail -f update.log
+ 2938  tail -f binup.log
+ 2939  tail -f relup.log
+ 2940  cd nzedb_tmp
+ 2941  g co master
+ 2942  g pu
+ 2943  g push
+ 2944  exit
+ 2945  cd nzedb_tmp
+ 2946  g pu
+ 2947  exit
+ 2948  cd nzedb_tmp
+ 2949  g pu
+ 2950  ssh uvmh
+ 2951  cd nzedb_tmp
+ 2952  g pu
+ 2953  exit
+ 2954  cd nzedb_tmp
+ 2955  g pu
+ 2956  g log
+ 2957  vi Changelog
+ 2958  cd nzedb_tmp
+ 2959  g pu
+ 2960  g log
+ 2961  cd nzedb_tmp
+ 2962  g pu
+ 2963  which git
+ 2964  exit
+ 2965  cd nzedb_tmp
+ 2966  g pu
+ 2967  exit
+ 2968  cd nzedb_tmp
+ 2969  g pu
+ 2970  vi Changelog
+ 2971  g co brian
+ 2972  g tag
+ 2973  date
+ 2974  g tag before_merge_2014_07_03
+ 2975  g merge master
+ 2976  g push
+ 2977  g co master
+ 2978  g push
+ 2979  crontab -e
+ 2980  cd
+ 2981  cd nzedb
+ 2982  g pull
+ 2983  cd misc/testing/DB
+ 2984  php patchDB.php
+ 2985  cd ..
+ 2986  cd cron
+ 2987  ./binup.sh&
+ 2988  cd /var/log/nzedb
+ 2989  ls -ltr
+ 2990  tail -f binup.log
+ 2991  tail -f relup.log
+ 2992  tail -f binup.log
+ 2993  tail -f relup.log
+ 2994  tail -f binup.log
+ 2995  tail -f relup.log
+ 2996  crontab -e
+ 2997  exit
+ 2998  cd nzedb_tmp
+ 2999  g pu
+ 3000  top
+ 3001  ps -ef | grep php
+ 3002  cd
+ 3003  cd nzedb/misc/cron
+ 3004  ./binup.sh&
+ 3005  top
+ 3006  ls -ltr
+ 3007  ps -ef | rep php
+ 3008  ps -ef | grep php
+ 3009  cd /var/log/nzedb
+ 3010  ls -ltr
+ 3011  tail -f relup.log
+ 3012  ps -ef | grep php
+ 3013  tail -f relup.log
+ 3014  ls -ltr
+ 3015  tail -f update.log
+ 3016  ls -ltr
+ 3017  tail -f binup.log
+ 3018  tail -f relup.log
+ 3019  tail -f update.log
+ 3020  cd nzedb/misc/update
+ 3021  ls
+ 3022  php update_releases.php
+ 3023  php update_releases.php 1 true
+ 3024  php update_releases.php 1 false
+ 3025  cd nzedb/misc/update
+ 3026  php update_releases.php 1 false
+ 3027  exit
+ 3028  cd nzedb
+ 3029  ls -ltr
+ 3030  cd misc/cron
+ 3031  ls
+ 3032  cat nzedb_update.pid
+ 3033  ps -ef | grep 54306
+ 3034  cat retry_count
+ 3035  ./binup.sh&
+ 3036  cd /var/log/nzedb
+ 3037  ls -ltr
+ 3038  tail -f binup.log
+ 3039  ps -ef | grep php
+ 3040  kill -9 59216
+ 3041  ps -ef | grep php
+ 3042  kill -9 59249
+ 3043  kill -9 59429
+ 3044  ps -ef | grep php
+ 3045  kill -9 60220
+ 3046  ps -ef | grep php
+ 3047  crontab -e
+ 3048  cd
+ 3049  cd nzedb_tmp
+ 3050  g co brian
+ 3051  g push --all
+ 3052  g push --tags
+ 3053  cd
+ 3054  cd nzedb
+ 3055  g pull
+ 3056  g co before_merge_2014_07_03
+ 3057  g branch
+ 3058  cd misc/update
+ 3059  ls
+ 3060  cd python_scripts
+ 3061  ls
+ 3062  cd ../python
+ 3063  ls
+ 3064  php binaries_safe_threaded.py
+ 3065  python binaries_safe_threaded.py
+ 3066  crontab -e
+ 3067  cd nzedb/misc/cron
+ 3068  ./binup.sh
+ 3069  bg
+ 3070  cd /var/log/nzedb
+ 3071  ls -ltr
+ 3072  tail -f binup.log
+ 3073  tail -f relup.log
+ 3074  tail -f update.log
+ 3075  crontab -e
+ 3076  tail -f update.log
+ 3077  cd nzedb_tmp
+ 3078  g co master
+ 3079  g pu
+ 3080  cd nzedb
+ 3081  cd misc/cron
+ 3082  ./binup.sh&
+ 3083  cd /var/log/nzedb
+ 3084  ls -ltr
+ 3085  tail -f binup.log
+ 3086  crontab -e
+ 3087  tail -f binup.log
+ 3088  cd nzedb_tmp
+ 3089  g pu
+ 3090  vi Changelog
+ 3091  g log
+ 3092  g tag
+ 3093  g co before_merge_2014_07_03
+ 3094  g tag last_known_good
+ 3095  ls -ltr
+ 3096  g tag
+ 3097  ls -la
+ 3098  cd /var/log/nzedb
+ 3099  ls -ltr
+ 3100  tail -f binup.log
+ 3101  tail -f relup.log
+ 3102  tail -f update.log
+ 3103  cd nzedb_tmp
+ 3104  g tag
+ 3105  g describe
+ 3106  g describe --tags
+ 3107  g diff before_merge_2014_07_03 .. last_known_good
+ 3108  g diff before_merge_2014_07_03 ... last_known_good
+ 3109  g co master
+ 3110  g pu
+ 3111  ps -ef | grep php
+ 3112  crontab -e
+ 3113  g co brian
+ 3114  date
+ 3115  g tags
+ 3116  g tag
+ 3117  date
+ 3118  g tag before_erge_2014_07_08
+ 3119  g tag before_merge_2014_07_08
+ 3120  g tag
+ 3121  g help tag
+ 3122  g tag -d before_erge_2014_07_08
+ 3123  g tag last_known_good
+ 3124  g merge master
+ 3125  g push
+ 3126  cd
+ 3127  cd nzedb
+ 3128  ls
+ 3129  g describe
+ 3130  g describe --tags
+ 3131  g co brian
+ 3132  g pull
+ 3133  g tag
+ 3134  cd misc/testing/DB
+ 3135  php patchDB.php
+ 3136  cd ..
+ 3137  cd ../cron
+ 3138  ./binup.sh&
+ 3139  crontab -e
+ 3140  cd /var/log/nzedb
+ 3141  ls -ltr
+ 3142  tail -f update.log
+ 3143  tail -f binup.log
+ 3144  vi binup.log
+ 3145  ls -ltr
+ 3146  tail -f binup.log
+ 3147  cd nzedb_tmp
+ 3148  g co master
+ 3149  g pu
+ 3150  g push
+ 3151  cd nzedb_tmp
+ 3152  g pu
+ 3153  ls -ltr
+ 3154  exit
+ 3155  cd nzedb_tmp
+ 3156  g pu
+ 3157  exit
+ 3158  cd nzedb_tmp
+ 3159  g pu
+ 3160  vi Changelog
+ 3161  g describe
+ 3162  g describe --tags
+ 3163  g tag
+ 3164  g diff v0.3.6...before_merge_2014_07_08
+ 3165  g status
+ 3166  g push
+ 3167  g co brian
+ 3168  g status
+ 3169  g tag
+ 3170  date
+ 3171  g tag before_merge_2014_07_14
+ 3172  g merge master
+ 3173  crontab -e
+ 3174  g push
+ 3175  cd
+ 3176  cd nzedb
+ 3177  g pull
+ 3178  cd misc/testing/DB
+ 3179  php patchDB.php
+ 3180  cd ../..
+ 3181  cd cron
+ 3182  ./binup.sh&
+ 3183  cd /var/log/nzedb
+ 3184  ls -ltr
+ 3185  tail -f binup.log
+ 3186  ls -ltr
+ 3187  tail -f relup.loge
+ 3188  tail -f relup.log
+ 3189  ls -ltr
+ 3190  tail -f update.log
+ 3191  crontab -e
+ 3192  ls -ltr
+ 3193  tail -f update.log
+ 3194  cd /home/bfincher
+ 3195  ls
+ 3196  ./orphan_release.py
+ 3197  cd nzedb/misc/update/python
+ 3198  ls
+ 3199  python binaries_safe_threaded.py
+ 3200  sudo vi /etc/network/interfaces
+ 3201  cd nzedb/misc/update/python
+ 3202  s
+ 3203  ls
+ 3204  python binaries_safe_threaded.py
+ 3205  cd nzedb/misc/update/python
+ 3206  ls
+ 3207  python binaries_safe_threaded.py
+ 3208  ps -ef | grep php
+ 3209  sudo init 0
+ 3210  cd nzedb/misc/update
+ 3211  php update_releases.php
+ 3212  php update_releases.php 1 false
+ 3213  ps -ef | grep python
+ 3214  kill -9 1741
+ 3215  ps -ef | grep python
+ 3216  kill -9 16559 16575 16585
+ 3217  ps -ef | grep python
+ 3218  ps -ef | grep php
+ 3219  top
+ 3220  cd nzedb/misc/update
+ 3221  php update_releases.php
+ 3222  php update_releases.php 1 false
+ 3223  ps -ef | grep python
+ 3224  kill -9 1741
+ 3225  ps -ef | grep python
+ 3226  kill -9 16559 16575 16585
+ 3227  ps -ef | grep python
+ 3228  ps -ef | grep php
+ 3229  top
+ 3230  cd nzedb
+ 3231  cd misc/update_scripts/
+ 3232  ls
+ 3233  pwd
+ 3234  cd
+ 3235  ls
+ 3236  cd nzedb/misc/update
+ 3237  ls
+ 3238  php update_releases.php 1 true
+ 3239  exit
+ 3240  cd nzedb/misc/update/python
+ 3241  /home/bfincher/get_num_parts.sh
+ 3242  nohup python binaries_safe_threaded.py > out *
+ 3243  bg
+ 3244  tail -f out
+ 3245  ls -ltr
+ 3246  sudo init 6
+ 3247  cd nzedb/misc/update
+ 3248  ls
+ 3249  vi tmp.sh
+ 3250  chmod +x tmp.sh
+ 3251  nohup ./tmp.sh > out &
+ 3252  tail -f out
+ 3253  crontab -e
+ 3254  cd nzedb/misc/cron
+ 3255  ./binup.sh&
+ 3256  cd /var/log/nzedb
+ 3257  ls -ltr
+ 3258  tail -f binup.log
+ 3259  tail -f relup.log
+ 3260  tail -f update.log
+ 3261  cd nzedb/misc/cron
+ 3262  ./binup.sh&
+ 3263  cd /var/log/nzedb
+ 3264  ls -ltr
+ 3265  tail -f binup.log
+ 3266  tail -f relup.log
+ 3267  tail -f update.log
+ 3268  cd
+ 3269  cd nzedb_tmp
+ 3270  g co master
+ 3271  g pu
+ 3272  cd /var/log/nzedb
+ 3273  ls -ltr
+ 3274  tail -f update.log
+ 3275  sudo init 0
+ 3276  cd nzedb/
+ 3277  find . -name "*.php" -exec grep -l 'available to process' {} \;
+ 3278  find . -name "*.php" -exec grep -l 'Available to process' {} \;
+ 3279  vi ./nzedb/controllers/ProcessAdditional.php
+ 3280  top
+ 3281  cd nzedb/misc/cron
+ 3282  ./binup.sh&
+ 3283  cd /var/log/nzedb
+ 3284  ls -ltr
+ 3285  tail -f binup.log
+ 3286  tail -f relup.log
+ 3287  tail -f update.log
+ 3288  vi update.log
+ 3289  tail -f update.log
+ 3290  ls -ltr
+ 3291  ps -ef | grep php
+ 3292  kill -9 2619
+ 3293  ls -ltr
+ 3294  tail -f update.log
+ 3295  ps -ef | grep php
+ 3296  cd
+ 3297  cd nzedb/misc/cron
+ 3298  ./binup.sh&
+ 3299  cd /var/log/nzedb
+ 3300  ls -ltr
+ 3301  tail -f binup.log
+ 3302  tail -f relup.log
+ 3303  tail -f update.log
+ 3304  cd
+ 3305  cd nzedb/misc/cron
+ 3306  ps -ef | grep php
+ 3307  cd /var/log/nzedb
+ 3308  ls -ltr
+ 3309  tail -f update.log
+ 3310  ps -ef | grep php
+ 3311  kill -9 6740
+ 3312  cd
+ 3313  cd nzedb/misc/cron
+ 3314  ./binup.sh&
+ 3315  cd /var/log/nzedb
+ 3316  tail -f binup.log
+ 3317  tail -f relup.loge
+ 3318  tail -f relup.log
+ 3319  tail -f update.log
+ 3320  cd /var/www/nzedb
+ 3321  ps -ef | grep php
+ 3322  kill -9 17358
+ 3323  find . -name "*.php" -exec grep -l 'Available to process' {} \;
+ 3324  vi ./nzedb/controllers/ProcessAdditional.php
+ 3325  find . -name "*.php" -exec grep -l 'Additional post-proc' {} \;
+ 3326  vi ./nzedb/controllers/ProcessAdditional.php
+ 3327  cd misc/update/python
+ 3328  ls
+ 3329  php postprocess_threaded.py
+ 3330  python postprocess_threaded.py
+ 3331  python postprocess_threaded.py additional
+ 3332  cd nzedb/misc
+ 3333  ls
+ 3334  cd cron
+ 3335  ls
+ 3336  cd /var/log/nzedb
+ 3337  ls -ltr
+ 3338  tail -f binup.log
+ 3339  tail -f update.log
+ 3340  cd
+ 3341  cd nzedb/misc/cron
+ 3342  ls -ltr
+ 3343  cat retry_count
+ 3344  cd /var/log/nzedb
+ 3345  ls -ltr
+ 3346  tail -f update.log
+ 3347  tail -f relup.log
+ 3348  tail -f update.log
+ 3349  top
+ 3350  kill -9 24135
+ 3351  top
+ 3352  cd nzedb/misc
+ 3353  ls
+ 3354  ls testing
+ 3355  unalias ls
+ 3356  ls
+ 3357  find . -name "*delete*"
+ 3358  vi ./testing/Release/delete_releases.php
+ 3359  mysql --user=root -p nzedb -h userverho
+ 3360  cd cron
+ 3361  ./binup.sh&
+ 3362  cd ..
+ 3363  cd
+ 3364  cd nzedb_tmp
+ 3365  g pu
+ 3366  g tag
+ 3367  cd /var/log/nzedb
+ 3368  tail -f binup.log
+ 3369  tail -f relup.log
+ 3370  tail -f update.log
+ 3371  cd nzedb_tmp
+ 3372  g pu
+ 3373  g log
+ 3374  cd misc/update
+ 3375  ls
+ 3376  php update_releases.php
+ 3377  ls
+ 3378  vi update_releases.php
+ 3379  cd nzedb_tmp
+ 3380  g pu
+ 3381  vi Changelog
+ 3382  crontab -e
+ 3383  vi Changelog
+ 3384  g co brian
+ 3385  g tag before_merge_2014_07_28
+ 3386  g merge master
+ 3387  g push
+ 3388  cd ../nzedb
+ 3389  g pull
+ 3390  g status
+ 3391  rm nzedb/controllers/.ProcessAdditional.php.swp
+ 3392  rm misc/update/out
+ 3393  rm misc/update/python/out
+ 3394  cd misc/testing/DB
+ 3395  php patchDB.php true
+ 3396  cd ..
+ 3397  php cli/update_db.php 1
+ 3398  cd misc/cron
+ 3399  ls
+ 3400  ./binup.sh&
+ 3401  cd /var/log/nzedb
+ 3402  tail -f binup.log
+ 3403  tail -f relup.log
+ 3404  tail -f update.log
+ 3405  crontab -e
+ 3406  cd
+ 3407  ls -ltr
+ 3408  exit
+ 3409  cd nzedb_tmp
+ 3410  g co master
+ 3411  g pu
+ 3412  g push
+ 3413  g co brian
+ 3414  g tag
+ 3415  g tag before_merge_2014_07_29
+ 3416  g merge master
+ 3417  g push
+ 3418  cd ..
+ 3419  cd nzedb
+ 3420  ps -ef | grep php
+ 3421  pushd /var/log/nzedb
+ 3422  tail -f update.log
+ 3423  top
+ 3424  ls -ltr
+ 3425  ps -ef | grep php
+ 3426  kill -9 1643 3316 5121 8297
+ 3427  ls -ltr
+ 3428  tail -f update.log
+ 3429  ps -ef | grep php
+ 3430  popd
+ 3431  g pull
+ 3432  cd misc/cron
+ 3433  ./binup.sh&
+ 3434  pushd /var/log/nzedb
+ 3435  tail -f binup.log
+ 3436  exit
+ 3437  crontab -e
+ 3438  cd nzedb_tmp
+ 3439  g co master
+ 3440  g pu
+ 3441  g diff master...v0.3.9
+ 3442  g diff master..v0.3.9
+ 3443  g diff master..v0.3.8
+ 3444  top
+ 3445  cd nzedb
+ 3446  cd misc/cron
+ 3447  ls
+ 3448  nohup ./binup.sh&
+ 3449  pushd /var/log/nzedb
+ 3450  tail -f binup.log
+ 3451  top
+ 3452  kill -9 3361 1695 6137 11355
+ 3453  top
+ 3454  tail -f binup.log
+ 3455  tail -f relup.log
+ 3456  tail -f update.log
+ 3457  popd
+ 3458  nohup ./binup.sh&
+ 3459  pushd /var/log/nzedb
+ 3460  tail -f relup.log
+ 3461  tail -f update.log
+ 3462  ps -ef | grep ffmp
+ 3463  /usr/bin/ffmpeg -i /var/www/nzedb/nzbfiles/tmpunrar/12982e754d9c2e8867aa09aa058c351442144323/unrar/winners.and.losers.s04e05.pdtv.x264-w4f.mp4 -vcodec copy -f null /dev/null
+ 3464  ps -ef | grep ffmp
+ 3465  kill -9 15961 15962 16517 16518
+ 3466  ps -ef | grep ffmp
+ 3467  tail -f update.log
+ 3468  ps -ef | grep ffmp
+ 3469  kill -9 17267 17269
+ 3470  ps -ef | grep ffmp
+ 3471  tail -f update.log
+ 3472  ps -ef | grep php
+ 3473  kill -9 16491
+ 3474  popd
+ 3475  ls
+ 3476  cat binup.sh
+ 3477  cd ../update
+ 3478  php postprocess.php all true
+ 3479  popd
+ 3480  ./binup.sh&
+ 3481  pushd /var/log/nzedb
+ 3482  tail -f binup.log
+ 3483  tail -f relup.log
+ 3484  tail -f update.log
+ 3485  crontab -e
+ 3486  history | grep ffm
+ 3487  /usr/bin/ffmpeg -i /var/www/nzedb/nzbfiles/tmpunrar/12982e754d9c2e8867aa09aa058c351442144323/unrar/winners.and.losers.s04e05.pdtv.x264-w4f.mp4 -vcodec copy -f null /dev/null
+ 3488  ls /var/www/nzedb/nzbfiles/tmpunrar
+ 3489  cd nzedb/misc/update
+ 3490  php postprocess.php all true
+ 3491  ls
+ 3492  php postprocess.php
+ 3493  php postprocess.php additional true
+ 3494  php postprocess.php sharing true
+ 3495  cd nzedb/misc/cron
+ 3496  ./binup.sh&
+ 3497  pushd /var/log/nzedb
+ 3498  tail -f binup.log
+ 3499  tail -f relup.log
+ 3500  tail -f update.log
+ 3501  popd
+ 3502  cd ../update
+ 3503  ls
+ 3504  php postprocess.php all true
+ 3505  cat ../cron/binup.sh
+ 3506  php decrypt_hashes.php 2000
+ 3507  php ../testing/Release/removeCrapReleases.php true 6
+ 3508  cat ../cron/binup.sh
+ 3509  php optimise_db.php
+ 3510  ls
+ 3511  php update_theaters.php
+ 3512  cd ../testing/
+ 3513  ls
+ 3514  cd PostProc
+ 3515  ls
+ 3516  cd ../Release
+ 3517  ls
+ 3518  php delete_disabled_category_releases.php
+ 3519  php delete_disabled_category_releases.php true
+ 3520  pushd /var/log/nzedb
+ 3521  tail -f binup.log
+ 3522  tail -f relup.log
+ 3523  tail -f update.log
+ 3524  ls -ltr
+ 3525  cd nzedb/misc/update
+ 3526  php update_binaries.php
+ 3527  cd ../cron
+ 3528  nohup ./binup.sh&
+ 3529  pushd /var/log/nzedb
+ 3530  ls -ltr
+ 3531  tail -f binup.log
+ 3532  ls -ltr
+ 3533  tail -f update.log
+ 3534  history
+ 3535  tail relup.log
+ 3536  tail -f binup.log
+ 3537  crontab -e
+ 3538  tail -f binup.log
+ 3539  tail -f update.log
+ 3540  ls -ltr
+ 3541  cd nzedb
+ 3542  cd misc/cron
+ 3543  ./binup.sh&
+ 3544  pushd /var/log/nzedb
+ 3545  ls -ltr
+ 3546  tail -f binup.log
+ 3547  tail -f relup.log
+ 3548  tail -f update.log
+ 3549  ps -ef | grep php
+ 3550  cd nzedb/misc/update
+ 3551  ls
+ 3552  php postprocess.php all true
+ 3553  mysql --user=root -p nzedb -h userverho
+ 3554  php postprocess.php all true
+ 3555  ls -ltr
+ 3556  cd /var/log/nzedb
+ 3557  ls -ltr
+ 3558  tail -f update.log
+ 3559  ls -ltr
+ 3560  tail -f update.log
+ 3561  ls -ltr
+ 3562  ntpq -p
+ 3563  crontab -e
+ 3564  cd /var/log/nzedb
+ 3565  ls -ltr
+ 3566  tail -f update.log
+ 3567  crontab -e
+ 3568  cd
+ 3569  cd nzedb_tmp
+ 3570  g co brian
+ 3571  g co -b brian_dev
+ 3572  g merge dev
+ 3573  g branch
+ 3574  g merge dev
+ 3575  g merge brian
+ 3576  g pu
+ 3577  g merge dev
+ 3578  g co dev
+ 3579  g pull
+ 3580  g branch -a
+ 3581  g merge upstream/dev
+ 3582  g co brian_dev
+ 3583  g merge dev
 <?xml version="1.0" encoding="UTF-8"?>
+<nzedb>
+        <versions>
+                <sql>
+                        <db>271</db>
+                        <file>271</file>
+                </sql>
+                <git>
+                        <tag>0.3.8</tag>
+                        <commit>8819</commit>
+                        <hooks>
+                                <precommit>9</precommit>
+                                <!-- this is the version of the pre-commit file in githooks NOT the files it calls -->
+                        </hooks>
+                </git>
+        </versions>
+</nzedb>
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+"nzedb/build/nZEDb.xml" 17L, 339C                                                                                                    1,1           All
 <nzedb>
 	<versions>
 		<sql>
