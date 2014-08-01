@@ -4,14 +4,13 @@ require dirname(__FILE__) . '/../../../www/config.php';
 
 use nzedb\db\Settings;
 
-$c = new ColorCLI();
+$pdo = new Settings();
 
 if (isset($argv[1]) && $argv[1] == "true") {
 
 	$timestart = TIME();
-	$pdo = new Settings();
-	$releases = new Releases(array('Settings' => $pdo, 'Groups' => null));
-	$category = new Category();
+	$releases = new Releases(['Settings' => $pdo]);
+	$category = new Category(['Settings' => $pdo]);
 	$nzb = new NZB($pdo);
 	$catlist = $category->getDisabledIDs();
 	$relsdeleted = 0;
@@ -27,11 +26,11 @@ if (isset($argv[1]) && $argv[1] == "true") {
 	}
 	$time = TIME() - $timestart;
 	if ($relsdeleted > 0) {
-		echo $c->header($relsdeleted . " releases deleted in " . $time . " seconds.");
+		echo $pdo->log->header($relsdeleted . " releases deleted in " . $time . " seconds.");
 	} else {
-		exit($c->info("No releases to delete."));
+		exit($pdo->log->info("No releases to delete."));
 	}
 } else {
-	exit($c->error("\nDeletes releases in categories you have disabled here : http://localhost/admin/category-list.php\n"
+	exit($pdo->log->error("\nDeletes releases in categories you have disabled here : http://localhost/admin/category-list.php\n"
 			. "php $argv[0] true    ...: run this script.\n"));
 }

@@ -75,23 +75,33 @@ class NZBImport
 	/**
 	 * Construct.
 	 *
-	 * @param bool $browser Was this started from the browser?
-	 * @param bool $echo    Echo to CLI?
+	 * @param array $options Class instances / various options.
 	 *
 	 * @access public
 	 */
-	public function __construct($browser = false, $echo = true)
+	public function __construct(array $options = array())
 	{
-		$this->pdo = new Settings();
-		$this->binaries = new Binaries();
-		$this->category = new Categorize();
-		$this->nzb = new NZB($this->pdo);
-		$this->releaseCleaner = new ReleaseCleaning();
+		$defaults = [
+			'Browser'          => false, // Was this started from the browser?
+			'Echo'             => true,  // Echo to CLI?
+			'Binaries'         => null,
+			'Categorize'       => null,
+			'NZB'              => null,
+			'ReleaseCleaning'  => null,
+			'Settings'         => null,
+		];
+		$options += $defaults;
+
+		$this->echoCLI = (!$this->browser && nZEDb_ECHOCLI && $options['Echo']);
+		$this->pdo = ($options['Settings'] instanceof Settings ? $options['Settings'] : new Settings());
+		$this->binaries = ($options['Binaries'] instanceof Binaries ? $options['Binaries'] : new Binaries(['Settings' => $this->pdo, 'Echo' => $this->echoCLI]));
+		$this->category = ($options['Categorize'] instanceof Categorize ? $options['Categorize'] : new Categorize(['Settings' => $this->pdo]));
+		$this->nzb = ($options['NZB'] instanceof NZB ? $options['NZB'] : new NZB($this->pdo));
+		$this->releaseCleaner = ($options['ReleaseCleaning'] instanceof ReleaseCleaning ? $options['ReleaseCleaning'] : new ReleaseCleaning($this->pdo));
 
 		$this->crossPostt = ($this->pdo->getSetting('crossposttime') != '') ? $this->pdo->getSetting('crossposttime') : 2;
-		$this->browser = $browser;
+		$this->browser = $options['Browser'];
 		$this->retVal = '';
-		$this->echoCLI = (!$this->browser && nZEDb_ECHOCLI && $echo);
 	}
 
 	/**
@@ -126,7 +136,7 @@ class NZBImport
 
 				// Get the contents of the NZB file as a string.
 				if (strtolower(substr($nzbFile, -7)) === '.nzb.gz') {
-					$nzbString = $this->deZipNzb($nzbFile);
+					$nzbString = nzedb\utility\Utility::unzipGzipFile($nzbFile);
 				} else {
 					$nzbString = file_get_contents($nzbFile);
 				}
@@ -220,33 +230,6 @@ class NZBImport
 		} else {
 			return true;
 		}
-	}
-
-	/**
-	 * Decompress a gzip'ed NZB.
-	 * @param string $path Path to the zipped NZB.
-	 *
-	 * @return string|bool
-	 *
-	 * @access protected
-	 */
-	protected function deZipNzb($path)
-	{
-		// String to hold the NZB contents.
-		$string = '';
-
-		// Open the gzip file.
-		$nzb = @gzopen($path, 'rb', 0);
-		if ($nzb) {
-			// Append the decompressed data to the string until we find the end of file pointer.
-			while (!gzeof($nzb)) {
-				$string .= gzread($nzb, 1024);
-			}
-			// Close the gzip file.
-			gzclose($nzb);
-		}
-		// Return the string.
-		return ($string === '' ? false : $string);
 	}
 
 	/**
@@ -407,7 +390,7 @@ class NZBImport
 				)
 			);
 		} else {
-			$this->echoOut('This release is already in our DB so skipping: ' . $subject);
+			//$this->echoOut('This release is already in our DB so skipping: ' . $subject);
 			return false;
 		}
 

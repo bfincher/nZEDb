@@ -7,20 +7,21 @@ class Groups
 	/**
 	 * @var nzedb\db\Settings
 	 */
-	protected $pdo;
+	public $pdo;
 
 	/**
 	 * Construct.
 	 *
-	 * @param null $pdo
+	 * @param array $options Class instances.
 	 */
-	public function __construct($pdo=null)
+	public function __construct(array $options = array())
 	{
-		if (!is_null($pdo)) {
-			$this->pdo = $pdo;
-		} else {
-			$this->pdo = new Settings();
-		}
+		$defaults = [
+			'Settings' => null
+		];
+		$options += $defaults;
+
+		$this->pdo = ($options['Settings'] instanceof Settings ? $options['Settings'] : new Settings());
 	}
 
 	/**
@@ -450,15 +451,15 @@ class Groups
 	public function reset($id)
 	{
 		// Remove rows from collections / binaries / parts.
-		(new Binaries())->purgeGroup($id);
+		(new Binaries(['Groups' => $this, 'Settings' => $this->pdo]))->purgeGroup($id);
 
 		// Remove rows from part repair.
 		$this->pdo->queryExec(sprintf("DELETE FROM partrepair WHERE group_id = %d", $id));
 
-		$this->pdo->queryExec(sprintf('DROP TABLE IF EXISTS collections_', $id));
-		$this->pdo->queryExec(sprintf('DROP TABLE IF EXISTS binaries_', $id));
-		$this->pdo->queryExec(sprintf('DROP TABLE IF EXISTS parts_', $id));
-		$this->pdo->queryExec(sprintf('DROP TABLE IF EXISTS partrepair_', $id));
+		$this->pdo->queryExec(sprintf('DROP TABLE IF EXISTS collections_%d', $id));
+		$this->pdo->queryExec(sprintf('DROP TABLE IF EXISTS binaries_%d', $id));
+		$this->pdo->queryExec(sprintf('DROP TABLE IF EXISTS parts_%d', $id));
+		$this->pdo->queryExec(sprintf('DROP TABLE IF EXISTS partrepair_%d', $id));
 
 		// Reset the group stats.
 		return $this->pdo->queryExec(
@@ -515,7 +516,7 @@ class Groups
 		);
 
 		if ($releaseArray !== false) {
-			$releases = new Releases();
+			$releases = new Releases(['Settings' => $this->pdo, 'Groups' => $this]);
 			$nzb = new NZB($this->pdo);
 			foreach ($releaseArray as $release) {
 				$releases->deleteSingle($release['guid'], $nzb);
@@ -537,7 +538,7 @@ class Groups
 		if (preg_match('/^\s*$/m', $groupList)) {
 			$ret = "No group list provided.";
 		} else {
-			$nntp = new NNTP(false);
+			$nntp = new NNTP(['Echo' => false]);
 			if ($nntp->doConnect() !== true) {
 				return 'Problem connecting to usenet.';
 			}
@@ -601,6 +602,11 @@ class Groups
 	}
 
 	/**
+	 * @var array
+	 */
+	private $cbppTableNames;
+
+	/**
 	 * Get the names of the collections/binaries/parts/part repair tables.
 	 * If TPG is on, try to create new tables for the group_id, if we fail, log the error and exit.
 	 *
@@ -611,10 +617,17 @@ class Groups
 	 */
 	public function getCBPTableNames($tpgSetting, $groupID)
 	{
-		$group['cname']  = 'collections';
-		$group['bname']  = 'binaries';
-		$group['pname']  = 'parts';
-		$group['prname'] = 'partrepair';
+		$groupKey = ($groupID . '_' . (int) $tpgSetting);
+
+		// Check if buffered and return. Prevents re-querying MySQL when TPG is on.
+		if (isset($this->cbppTableNames[$groupKey])) {
+			return $this->cbppTableNames[$groupKey];
+		}
+
+		$tables['cname']  = 'collections';
+		$tables['bname']  = 'binaries';
+		$tables['pname']  = 'parts';
+		$tables['prname'] = 'partrepair';
 
 		if ($tpgSetting === true) {
 			if ($groupID == '') {
@@ -626,12 +639,16 @@ class Groups
 			}
 
 			$groupEnding = '_' . $groupID;
-			$group['cname']  .= $groupEnding;
-			$group['bname']  .= $groupEnding;
-			$group['pname']  .= $groupEnding;
-			$group['prname'] .= $groupEnding;
+			$tables['cname']  .= $groupEnding;
+			$tables['bname']  .= $groupEnding;
+			$tables['pname']  .= $groupEnding;
+			$tables['prname'] .= $groupEnding;
 		}
-		return $group;
+
+		// Buffer.
+		$this->cbppTableNames[$groupKey] = $tables;
+
+		return $tables;
 	}
 
 	/**

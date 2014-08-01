@@ -15,25 +15,29 @@ class Logging
 
 	/**
 	 * @var object DB Class instance.
-	 * @access private
+	 * @access public
 	 */
-	private $pdo;
+	public $pdo;
 
 	/**
 	 * @var object Class instance.
-	 * @access private
+	 * @access public
 	 */
-	private $colorCLI;
+	public $colorCLI;
 
 	/**
 	 * Constructor.
 	 *
 	 * @access public
 	 */
-	public function __construct()
+	public function __construct(array $options = array())
 	{
-		$this->pdo = new Settings();
-		$this->colorCLI = new ColorCLI();
+		$defaults = [
+			'Settings' => null,
+		];
+		$options += $defaults;
+
+		$this->pdo = ($options['Settings'] instanceof Settings ? $options['Settings'] : new Settings());
 
 		$this->newLine = PHP_EOL;
 	}

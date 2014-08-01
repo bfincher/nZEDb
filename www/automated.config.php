@@ -16,6 +16,15 @@ define('nZEDb_LIBS', nZEDb_ROOT . 'libs' . DS);
 // Used to refer to the /misc class files.
 define('nZEDb_MISC', nZEDb_ROOT . 'misc' . DS);
 
+// /misc/update/
+define('nZEDb_UPDATE', nZEDb_MISC . 'update' . DS);
+
+// /misc/update/nix/
+define('nZEDb_NIX', nZEDb_UPDATE . 'nix' . DS);
+
+// /misc/update/nix/multiprocessing/
+define('nZEDb_MULTIPROCESSING', nZEDb_NIX . 'multiprocessing' . DS);
+
 // Refers to the web root for the Smarty lib
 define('nZEDb_WWW', nZEDb_ROOT . 'www' . DS);
 
@@ -55,9 +64,9 @@ define('nZEDb_VERSIONS', nZEDb_LIB . 'build' . DS . 'nZEDb.xml');
 
 if (is_file(__DIR__ . DS . 'settings.php')) {
 	require_once(__DIR__ . DS . 'settings.php');
-	// Remove this in the future, this is for those who are nothing updating their settings.php file.
-	if (!defined('nZEDb_LOGAUTOLOADER')) {
-		define('nZEDb_LOGAUTOLOADER', false);
+	// Remove this in the future, here for those not updating settings.php
+	if (!defined('nZEDb_USE_SQL_TRANSACTIONS')) {
+		define('nZEDb_USE_SQL_TRANSACTIONS', true);
 	}
 } else {
 	define('ITEMS_PER_PAGE', '50');
@@ -75,6 +84,14 @@ if (is_file(__DIR__ . DS . 'settings.php')) {
 	define('nZEDb_QUERY_STRIP_WHITESPACE', false);
 	define('nZEDb_RENAME_PAR2', true);
 	define('nZEDb_RENAME_MUSIC_MEDIAINFO', true);
+	define('nZEDb_CACHE_EXPIRY_SHORT', 300);
+	define('nZEDb_CACHE_EXPIRY_MEDIUM', 600);
+	define('nZEDb_CACHE_EXPIRY_LONG', 900);
+	define('nZEDb_PREINFO_OPEN', false);
+	define('nZEDb_FLOOD_CHECK', false);
+	define('nZEDb_FLOOD_WAIT_TIME', 5);
+	define('nZEDb_FLOOD_MAX_REQUESTS_PER_SECOND', 5);
+	define('nZEDb_USE_SQL_TRANSACTIONS', true);
 }
 
 require_once nZEDb_CORE . 'autoloader.php';

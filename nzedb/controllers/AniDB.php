@@ -5,24 +5,35 @@ use nzedb\db\Settings;
 
 class AniDB
 {
-	private $pdo;
+	/**
+	 * @var nzedb\db\Settings
+	 */
+	public $pdo;
 
-	function __construct($echooutput = false)
+	/**
+	 * @param array $options Class instances / Echo to cli.
+	 */
+	public function __construct(array $options = array())
 	{
-		$this->pdo = new Settings();
+		$defaults = [
+			'Echo'     => false,
+			'Settings' => null,
+		];
+		$options += $defaults;
+
+		$this->echooutput = ($options['Echo'] && nZEDb_ECHOCLI);
+		$this->pdo = ($options['Settings'] instanceof Settings ? $options['Settings'] : new Settings());
 
 		$qty = $this->pdo->getSetting('maxanidbprocessed');
 		$this->aniqty = !empty($qty) ? $qty : 100;
-		$this->echooutput = ($echooutput && nZEDb_ECHOCLI);
 		$this->imgSavePath = nZEDb_COVERS . 'anime' . DS;
-		$this->c = new ColorCLI();
 	}
 
 	public function animetitlesUpdate()
 	{
 		// this should not be run as it should be handled by populate_anidb
 		if ($this->echooutput) {
-			$this->c->doEcho("Skipped update aniTitles as it is handled by populate_anidb in misc/testing/DB", true);
+			$this->pdo->log->doEcho("Skipped update aniTitles as it is handled by populate_anidb in misc/testing/DB", true);
 		}
 		return;
 	}
@@ -249,7 +260,7 @@ class AniDB
 			return $cleanFilename;
 		} else {
 			if ($this->echooutput) {
-				$this->c->doEcho("\tFalling back to Pure REGEX method to determine name.", true);
+				$this->pdo->log->doEcho("\tFalling back to Pure REGEX method to determine name.", true);
 			}
 
 			// if no "'s were found then fall back to cleanFilename;
@@ -276,7 +287,7 @@ class AniDB
 
 		if (count($results) > 0) {
 			if ($this->echooutput) {
-				$this->c->doEcho('Processing ' . count($results) . " anime releases.", true);
+				$this->pdo->log->doEcho('Processing ' . count($results) . " anime releases.", true);
 			}
 
 			foreach ($results as $arr) {
@@ -288,7 +299,7 @@ class AniDB
 				$getReleaseName = $this->getReleaseName($arr['searchname']);
 
 				if ($this->echooutput) {
-					$this->c->doEcho("\tProcessing Anime entitled: " . $getReleaseName['title'], true);
+					$this->pdo->log->doEcho("\tProcessing Anime entitled: " . $getReleaseName['title'], true);
 				}
 
 				// get anidb number for the title of the naime
@@ -300,7 +311,7 @@ class AniDB
 				}
 
 				if ($this->echooutput) {
-					$this->c->doEcho('Looking up: ' . $arr['searchname'], true);
+					$this->pdo->log->doEcho('Looking up: ' . $arr['searchname'], true);
 				}
 
 				$AniDBAPIArray = $this->getAnimeInfo($anidbID);
@@ -328,7 +339,7 @@ class AniDB
 					$tvtitle = ($episodetitle !== 'Complete Movie' && $episodetitle !== $cleanFilename['epno']) ? $cleanFilename['epno'] . ' - ' . $episodetitle : $episodetitle;
 
 					if ($this->echooutput) {
-						$this->c->doEcho('- found ' . $AniDBAPIArray['anidbid'], true);
+						$this->pdo->log->doEcho('- found ' . $AniDBAPIArray['anidbid'], true);
 					}
 
 					// lastly update the information, we also want a better readable name, AKA search name so we can use the title we cleaned
@@ -341,12 +352,12 @@ class AniDB
 			} // foreach
 
 			if ($this->echooutput) {
-				$this->c->doEcho('Processed ' . count($results) . " anime releases.", true);
+				$this->pdo->log->doEcho('Processed ' . count($results) . " anime releases.", true);
 			}
 		} // if
 		else {
 			if ($this->echooutput) {
-				$this->c->doEcho($this->c->header('No anime releases to process.'));
+				$this->pdo->log->doEcho($this->pdo->log->header('No anime releases to process.'));
 			}
 		}
 	}

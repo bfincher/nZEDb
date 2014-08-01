@@ -31,19 +31,18 @@ if (empty($unrarPath)) {
 	exit ('The site setting for the unrar path must not be empty!' . PHP_EOL);
 }
 
-$c = new ColorCLI();
-
-$nntp = new NNTP;
+$nntp = new NNTP(['Settings' => $pdo]);
+$nfo = new Nfo(['Echo' => true, 'Settings' => $pdo]);
 $nzbContents= new NZBContents(
 	array(
-		'db' => $pdo,
-		'echo' => true,
-		'nfo' => new Nfo(true),
-		'pp' => new PostProcess(true),
-		'nntp' => $nntp
+		'Settings' => $pdo,
+		'Echo' => true,
+		'Nfo' => $nfo,
+		'PostProcess' => new PostProcess(['Settings' => $pdo, 'Nfo' => $nfo]),
+		'NNTP' => $nntp
 	)
 );
-$categorize = new Categorize();
+$categorize = new Categorize(['Settings' => $pdo]);
 
 $releases = $pdo->queryDirect(
 	sprintf('
@@ -196,5 +195,4 @@ if ($releases !== false) {
 			)
 		);
 	}
-	$nntp->doQuit();
 }

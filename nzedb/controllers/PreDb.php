@@ -1,5 +1,5 @@
 <?php
-
+use nzedb\db\Settings;
 /**
  * Class for inserting names/categories etc from PreDB sources into the DB,
  * also for matching names on files / subjects.
@@ -31,44 +31,57 @@ Class PreDb
 	 */
 	protected $pdo;
 
+	private $dateLimit;
+
 	/**
-	 * @var ColorCLI
+	 * @param array $options
 	 */
-	protected $c;
-	/**
-	 * @param bool $echo
-	 */
-	public function __construct($echo = false)
+	public function __construct(array $options = array())
 	{
-		$this->echooutput = ($echo && nZEDb_ECHOCLI);
-		$this->pdo = new nzedb\db\DB();
-		$this->c = new ColorCLI();
+		$defaults = [
+			'Echo'     => false,
+			'Settings' => null,
+		];
+		$options += $defaults;
+
+		$this->echooutput = ($options['Echo'] && nZEDb_ECHOCLI);
+		$this->pdo = ($options['Settings'] instanceof Settings ? $options['Settings'] : new Settings());
 	}
 
 	/**
 	 * Attempts to match PreDB titles to releases.
 	 *
-	 * @param $nntp
+	 * @param $dateLimit
 	 */
-	public function checkPre($nntp)
+	public function checkPre($dateLimit = false)
 	{
-		$consoleTools = new ConsoleTools();
+		$this->dateLimit = $dateLimit;
+
+		$consoleTools = new ConsoleTools(['ColorCLI' => $this->pdo->log]);
 		$updated = 0;
+		$datesql = '';
+
 		if ($this->echooutput) {
-			echo $this->c->header('Querying DB for release search names not matched with PreDB titles.');
+			echo $this->pdo->log->header('Querying DB for release search names not matched with PreDB titles.');
 		}
 
-		$res = $this->pdo->queryDirect('
-			SELECT p.id AS preid, r.id AS releaseid
-			FROM predb p
-			INNER JOIN releases r ON p.title = r.searchname
-			WHERE r.preid = 0'
+		if ($this->dateLimit !== false && is_numeric($this->dateLimit)) {
+			$datesql = sprintf('AND DATEDIFF(NOW(), adddate) <= %d', $this->dateLimit);
+		}
+
+		$res = $this->pdo->queryDirect(
+						sprintf('
+							SELECT p.id AS preid, r.id AS releaseid
+							FROM predb p
+							INNER JOIN releases r ON p.title = r.searchname
+							WHERE r.preid < 1 %s',
+							$datesql
+						)
 		);
 
 		if ($res !== false) {
-
 			$total = $res->rowCount();
-			echo $this->c->primary(number_format($total) . ' releases to match.');
+			echo $this->pdo->log->primary(number_format($total) . ' releases to match.');
 
 			if ($total > 0) {
 				foreach ($res as $row) {
@@ -88,7 +101,7 @@ Class PreDb
 			}
 
 			if ($this->echooutput) {
-				echo $this->c->header(
+				echo $this->pdo->log->header(
 					'Matched ' . number_format(($updated > 0) ? $updated : 0) . ' PreDB titles to release search names.'
 				);
 			}
@@ -147,8 +160,8 @@ Class PreDb
 	 */
 	public function parseTitles($time, $echo, $cats, $namestatus, $show)
 	{
-		$namefixer = new NameFixer($this->echooutput);
-		$consoletools = new ConsoleTools();
+		$namefixer = new NameFixer(['Echo' => $this->echooutput, 'ConsoleTools' => $this->pdo->log, 'Settings' => $this->pdo]);
+		$consoletools = new ConsoleTools(['ColorCLI' => $this->pdo->log]);
 		$updated = $checked = 0;
 		$matches = '';
 
@@ -166,7 +179,7 @@ Class PreDb
 			if ($time == 1) {
 				$te = ' in the past 3 hours';
 			}
-			echo $this->c->header('Fixing search names' . $te . " using the predb hash.");
+			echo $this->pdo->log->header('Fixing search names' . $te . " using the predb hash.");
 		}
 		$regex = "AND (r.ishashed = 1 OR rf.ishashed = 1)";
 
@@ -184,7 +197,7 @@ Class PreDb
 
 		$res = $this->pdo->queryDirect($query);
 		$total = $res->rowCount();
-		echo $this->c->primary(number_format($total) . " releases to process.");
+		echo $this->pdo->log->primary(number_format($total) . " releases to process.");
 		if ($total > 0) {
 			foreach ($res as $row) {
 				if (preg_match('/[a-fA-F0-9]{32,40}/i', $row['name'], $matches)) {
@@ -198,9 +211,9 @@ Class PreDb
 			}
 		}
 		if ($echo == 1) {
-			echo $this->c->header("\n" . $updated . " releases have had their names changed out of: " . number_format($checked) . " files.");
+			echo $this->pdo->log->header("\n" . $updated . " releases have had their names changed out of: " . number_format($checked) . " files.");
 		} else {
-			echo $this->c->header("\n" . $updated . " releases could have their names changed. " . number_format($checked) . " files were checked.");
+			echo $this->pdo->log->header("\n" . $updated . " releases could have their names changed. " . number_format($checked) . " files were checked.");
 		}
 
 		return $updated;
@@ -219,7 +232,7 @@ Class PreDb
 	{
 		if ($search !== '') {
 			$search = explode(' ', trim($search));
-			if (count($search > 1)) {
+			if (count($search) > 1) {
 				$search = "LIKE '%" . implode("%' AND title LIKE '%", $search) . "%'";
 			} else {
 				$search = "LIKE '%" . $search . "%'";

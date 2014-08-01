@@ -12,23 +12,37 @@ class Games
 	const CONS_UPROC = 0; // Release has not been processed.
 	const REQID_FOUND = 1; // Request ID found and release was updated.
 
+	/**
+	 * @var nzedb\db\Settings
+	 */
 	public $pdo;
 
-	function __construct($echooutput = false)
+	/**
+	 * @param array $options Class instances / Echo to cli.
+	 */
+	public function __construct(array $options = array())
 	{
-		$this->echooutput = ($echooutput && nZEDb_ECHOCLI);
+		$defaults = [
+			'Echo'     => false,
+			'Settings' => null,
+		];
+		$options += $defaults;
 
-		$this->pdo = new Settings();
+		$this->echooutput = ($options['Echo'] && nZEDb_ECHOCLI);
+
+		$this->pdo = ($options['Settings'] instanceof Settings ? $options['Settings'] : new Settings());
+
 		$this->pubkey = $this->pdo->getSetting('giantbombkey');
 		$this->gameqty = ($this->pdo->getSetting('maxgamesprocessed') != '') ? $this->pdo->getSetting('maxgamesprocessed') : 150;
 		$this->sleeptime = ($this->pdo->getSetting('amazonsleep') != '') ? $this->pdo->getSetting('amazonsleep') : 1000;
 		$this->imgSavePath = nZEDb_COVERS . 'games' . DS;
 		$this->renamed = '';
+		$this->matchpercent = 60;
+		$this->maxhitrequest = false;
 		if ($this->pdo->getSetting('lookupgames') == 2) {
 			$this->renamed = 'AND isrenamed = 1';
 		}
 		//$this->cleangames = ($this->pdo->getSetting('lookupgames') == 2) ? 'AND isrenamed = 1' : '';
-		$this->c = new ColorCLI();
 	}
 
 	public function getgamesinfo($id)
@@ -79,7 +93,7 @@ class Games
 		$catsrch = "";
 		if (count($cat) > 0 && $cat[0] != -1) {
 			$catsrch = " (";
-			$categ = new Category();
+			$categ = new Category(['Settings' => $this->pdo]);
 			foreach ($cat as $category) {
 				if ($category != -1) {
 					if ($categ->isParent($category)) {
@@ -132,7 +146,7 @@ class Games
 		$catsrch = "";
 		if (count($cat) > 0 && $cat[0] != -1) {
 			$catsrch = " (";
-			$categ = new Category();
+			$categ = new Category(['Settings' => $this->pdo]);
 			foreach ($cat as $category) {
 				if ($category != -1) {
 					if ($categ->isParent($category)) {
@@ -322,11 +336,14 @@ class Games
 	 */
 	public function updategamesinfo($gameInfo)
 	{
-		$gen = new Genres();
+		$gen = new Genres(['Settings' => $this->pdo]);
 		$ri = new ReleaseImage($this->pdo);
 
 		$con = array();
 		$ggameid = $this->fetchgiantbombgameid($gameInfo['title']);
+		if($this->maxhitrequest === true){
+		return false;
+		}
 		$gb = $this->fetchGiantBombArray($ggameid);
 		$gb = $gb['results'];
 		if (!is_array($gb)) {
@@ -383,9 +400,7 @@ class Games
 		// This actual compares the two strings and outputs a percentage value.
 		$titlepercent = $platformpercent = '';
 		similar_text(strtolower($gameInfo['title']), strtolower($con['title']), $titlepercent);
-		similar_text(strtolower($gameInfo['platform']),
-					 strtolower($con['platform']),
-					 $platformpercent);
+		similar_text(strtolower($gameInfo['platform']), strtolower($con['platform']), $platformpercent);
 
 		// If the release is DLC matching sucks, so assume anything over 50% is legit.
 		if (isset($gameInfo['dlc']) && $gameInfo['dlc'] == 1) {
@@ -400,18 +415,16 @@ class Games
 		echo("Matched: Platform Percentage: $platformpercent% \n");
 		*/
 
-		// If the Title is less than 80% Platform must be 100% unless it is XBLA.
-		if ($titlepercent < 60) {
+		// If the Title is less than 60% Platform must be 100% unless it is XBLA.
+		if ($titlepercent < $this->matchpercent) {
 			if ($platformpercent != 100) {
 				return false;
 			}
 		}
 
-		// If title is less than 80% then its most likely not a match.
-		if ($titlepercent < 60) {
-			similar_text(strtolower($gameInfo['title'] . ' - ' . $gameInfo['platform']),
-						 strtolower($con['title']),
-						 $titlewithplatpercent);
+		// If title is less than 70% then its most likely not a match.
+		if ($titlepercent < $this->matchpercent) {
+			similar_text(strtolower($gameInfo['title'] . ' - ' . $gameInfo['platform']), strtolower($con['title']), $titlewithplatpercent);
 			if ($titlewithplatpercent < 70) {
 				return false;
 			}
@@ -427,11 +440,6 @@ class Games
 		$con['url'] = (string)$gb['site_detail_url'];
 		$con['url'] = str_replace("%26tag%3Dws", "%26tag%3Dopensourceins%2D21", $con['url']);
 
-		/*$con['salesrank'] = (string)$amaz->Items->Item->SalesRank;
-		if ($con['salesrank'] == "") {
-			$con['salesrank'] = 'null';
-		}
-		*/
 		if (is_array($gb['publishers'])) {
 			while (list($key) = each($gb['publishers'])) {
 				if ($key == 0) {
@@ -546,20 +554,20 @@ class Games
 
 		if ($gamesId) {
 			if ($this->echooutput) {
-				$this->c->doEcho(
-					$this->c->header("Added/updated game: ") .
-					$this->c->alternateOver("   Title:    ") .
-					$this->c->primary($con['title']) .
-					$this->c->alternateOver("   Platform: ") .
-					$this->c->primary($con['platform'])
+				$this->pdo->log->doEcho(
+					$this->pdo->log->header("Added/updated game: ") .
+					$this->pdo->log->alternateOver("   Title:    ") .
+					$this->pdo->log->primary($con['title']) .
+					$this->pdo->log->alternateOver("   Platform: ") .
+					$this->pdo->log->primary($con['platform'])
 				);
 			}
 			$con['cover'] = $ri->saveImage($gamesId, $con['coverurl'], $this->imgSavePath, 250, 250);
 		} else {
 			if ($this->echooutput) {
-				$this->c->doEcho(
-					$this->c->headerOver("Nothing to update: ") .
-					$this->c->primary($con['title'] . " (" . $con['platform'] . ')' )
+				$this->pdo->log->doEcho(
+					$this->pdo->log->headerOver("Nothing to update: ") .
+					$this->pdo->log->primary($con['title'] . " (" . $con['platform'] . ')' )
 				);
 			}
 		}
@@ -604,6 +612,11 @@ class Games
 		$obj = new GiantBomb($this->pubkey);
 		try {
 			$result = json_decode(json_encode($obj->search($title, '', 1)), true);
+			// We hit the maximum request.
+			if(empty($result)){
+			$this->maxhitrequest = true;
+			$result = false;
+			}
 			if (!is_array($result['results']) || (int) $result['number_of_total_results'] === 0) {
 				$result = false;
 			} else {
@@ -634,19 +647,22 @@ class Games
 
 		if ($res !== false && $res->rowCount() > 0) {
 			if ($this->echooutput) {
-				$this->c->doEcho($this->c->header("Processing " . $res->rowCount() . ' games release(s).'));
+				$this->pdo->log->doEcho($this->pdo->log->header("Processing " . $res->rowCount() . ' games release(s).'));
 			}
 
 			foreach ($res as $arr) {
+
+				// Reset maxhitrequest
+				$this->maxhitrequest = false;
 				$startTime = microtime(true);
 				$usedgb = false;
 				$gameInfo = $this->parseTitle($arr['searchname']);
 				if ($gameInfo !== false) {
 
 					if ($this->echooutput) {
-						$this->c->doEcho(
-							$this->c->headerOver('Looking up: ') .
-							$this->c->primary($gameInfo['title'] . ' (' . $gameInfo['platform'] . ')' )
+						$this->pdo->log->doEcho(
+							$this->pdo->log->headerOver('Looking up: ') .
+							$this->pdo->log->primary($gameInfo['title'] . ' (' . $gameInfo['platform'] . ')' )
 						);
 					}
 
@@ -658,7 +674,13 @@ class Games
 						$usedgb = true;
 						if ($gameId === false) {
 							$gameId = -2;
+
+						// Leave gamesinfo_id 0 to parse again
+						if($this->maxhitrequest === true){
+							$gameId = 0;
 						}
+						}
+
 					} else {
 						$gameId = $gameCheck['id'];
 					}
@@ -682,7 +704,7 @@ class Games
 			}
 		} else {
 			if ($this->echooutput) {
-				$this->c->doEcho($this->c->header('No games releases to process.'));
+				$this->pdo->log->doEcho($this->pdo->log->header('No games releases to process.'));
 			}
 		}
 	}

@@ -27,11 +27,11 @@ if (count($groups) === 0) {
 	}
 }
 
-$nntp = new NNTP(true);
+$nntp = new NNTP(['Settings' => $pdo]);
 
 $nntp->doConnect() or exit('Could not connect to Usenet!' . PHP_EOL);
 
-$backFill = new Backfill($nntp, true);
+$binaries = new Binaries(['NNTP' => $nntp, 'Settings' => $pdo]);
 
 foreach ($groups as $group) {
 	$groupNNTP = $nntp->selectGroup($group['name']);
@@ -48,14 +48,14 @@ foreach ($groups as $group) {
 		continue;
 	}
 
-	$articleNumber = (int)$backFill->daytopost(round(((time() - $postDate['postdate']) / 86400)), $groupNNTP);
+	$articleNumber = (int)$binaries->daytopost(round(((time() - $postDate['postdate']) / 86400)), $groupNNTP);
 	if ($articleNumber >= $group['last_record']) {
 		echo 'ERROR! Could not determine the article number for this date: (' .
 			$postDate['postdate'] . ') on group (' . $group['name'] . ')' . PHP_EOL;
 		continue;
 	}
 
-	$articleDate = $backFill->postdate($articleNumber, $groupNNTP);
+	$articleDate = $binaries->postdate($articleNumber, $groupNNTP);
 
 	$pdo->queryExec(
 		sprintf('

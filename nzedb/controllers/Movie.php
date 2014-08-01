@@ -101,17 +101,24 @@ class Movie
 	protected $imdbLanguage;
 
 	/**
-	 * @param bool $echoOutput
+	 * @param array $options Class instances / Echo to CLI.
 	 */
-	public function __construct($echoOutput = false)
+	public function __construct(array $options = array())
 	{
-		$this->c = new ColorCLI();
-		$this->pdo = new Settings();
-		$this->releaseImage = new ReleaseImage($this->pdo);
+		$defaults = [
+			'Echo'         => false,
+			'ReleaseImage' => null,
+			'Settings'     => null,
+			'TMDb'         => null,
+		];
+		$options = $defaults;
+
+		$this->pdo = ($options['Settings'] instanceof Settings ? $options['Settings'] : new Settings());
+		$this->releaseImage = ($options['ReleaseImage'] instanceof ReleaseImage ? $options['ReleaseImage'] : new ReleaseImage($this->pdo));
 
 		$this->imdbLanguage = ($this->pdo->getSetting('imdblanguage') != '') ? $this->pdo->getSetting('imdblanguage') : 'en';
 
-		$this->tmdb = new TMDb($this->pdo->getSetting('tmdbkey'), $this->imdbLanguage);
+		$this->tmdb = ($options['TMDb'] instanceof TMDb ? $options['TMDb'] : new TMDb($this->pdo->getSetting('tmdbkey'), $this->imdbLanguage));
 
 		$this->fanartapikey = $this->pdo->getSetting('fanarttvkey');
 		$this->imdburl = ($this->pdo->getSetting('imdburl') == 0 ? false : true);
@@ -120,13 +127,13 @@ class Movie
 		$this->showPasswords = ($this->pdo->getSetting('showpasswordedrelease') != '') ? $this->pdo->getSetting('showpasswordedrelease') : 0;
 
 		$this->debug = nZEDb_DEBUG;
-		$this->echooutput = ($echoOutput && nZEDb_ECHOCLI);
+		$this->echooutput = ($options['Echo'] && nZEDb_ECHOCLI);
 		$this->imgSavePath = nZEDb_COVERS . 'movies' . DS;
 		$this->service = '';
 
 		if (nZEDb_DEBUG || nZEDb_LOGGING) {
 			$this->debug = true;
-			$this->debugging = new Debugging('Movie');
+			$this->debugging = new Debugging(['Class' => 'Movie', 'ColorCLI' => $this->pdo->log]);
 		}
 	}
 
@@ -254,7 +261,7 @@ class Movie
 	 * @param       $maxAge
 	 * @param array $excludedCats
 	 *
-	 * @return bool
+	 * @return bool|PDOStatement
 	 */
 	public function getMovieRange($cat, $start, $num, $orderBy, $maxAge = -1, $excludedCats = array())
 	{
@@ -352,7 +359,7 @@ class Movie
 		$catSearch = '';
 		if (count($cat) > 0 && $cat[0] != -1) {
 			$catSearch = '(';
-			$Category = new Category();
+			$Category = new Category(['Settings' => $this->pdo]);
 			foreach ($cat as $category) {
 				if ($category != -1) {
 
@@ -553,7 +560,7 @@ class Movie
 	public function updateMovieInfo($imdbId)
 	{
 		if ($this->echooutput && $this->service !== '') {
-			$this->c->doEcho($this->c->primary("Fetching IMDB info from TMDB using IMDB ID: " . $imdbId));
+			$this->pdo->log->doEcho($this->pdo->log->primary("Fetching IMDB info from TMDB using IMDB ID: " . $imdbId));
 		}
 
 		// Check TMDB for IMDB info.
@@ -624,7 +631,7 @@ class Movie
 		}
 
 		$mov['title']    = html_entity_decode($mov['title']   , ENT_QUOTES, 'UTF-8');
-		$mov['plot']     = html_entity_decode($mov['plot']    , ENT_QUOTES, 'UTF-8');
+		$mov['plot']     = html_entity_decode(preg_replace('/\s+See full summary »/', ' ', $mov['plot']), ENT_QUOTES, 'UTF-8');
 		$mov['tagline']  = html_entity_decode($mov['tagline'] , ENT_QUOTES, 'UTF-8');
 		$mov['genre']    = html_entity_decode($mov['genre']   , ENT_QUOTES, 'UTF-8');
 		$mov['director'] = html_entity_decode($mov['director'], ENT_QUOTES, 'UTF-8');
@@ -729,9 +736,9 @@ class Movie
 		}
 
 		if ($this->echooutput && $this->service !== '') {
-			$this->c->doEcho(
-				$this->c->headerOver(($movieID !== 0 ? 'Added/updated movie: ' : 'Nothing to update for movie: ')) .
-				$this->c->primary($mov['title'] .
+			$this->pdo->log->doEcho(
+				$this->pdo->log->headerOver(($movieID !== 0 ? 'Added/updated movie: ' : 'Nothing to update for movie: ')) .
+				$this->pdo->log->primary($mov['title'] .
 					' (' .
 					$mov['year'] .
 					') - ' .
@@ -774,7 +781,7 @@ class Movie
 							$ret['title'] = $art->movie['name'];
 						}
 						if ($this->echooutput) {
-							$this->c->doEcho($this->c->alternateOver("Fanart Found ") . $this->c->headerOver($ret['title']));
+							$this->pdo->log->doEcho($this->pdo->log->alternateOver("Fanart Found ") . $this->pdo->log->headerOver($ret['title']));
 						}
 						return $ret;
 					}
@@ -858,7 +865,7 @@ class Movie
 			$ret['backdrop'] = "http://image.tmdb.org/t/p/original" . $tmdbLookup['backdrop_path'];
 		}
 		if ($this->echooutput) {
-			$this->c->doEcho($this->c->primaryOver("TMDb Found ") . $this->c->headerOver($ret['title']), true);
+			$this->pdo->log->doEcho($this->pdo->log->primaryOver("TMDb Found ") . $this->pdo->log->headerOver($ret['title']), true);
 		}
 		return $ret;
 	}
@@ -950,7 +957,7 @@ class Movie
 				}
 			}
 			if ($this->echooutput && isset($ret['title'])) {
-				$this->c->doEcho($this->c->headerOver("IMDb Found ") . $this->c->primaryOver($ret['title']), true);
+				$this->pdo->log->doEcho($this->pdo->log->headerOver("IMDb Found ") . $this->pdo->log->primaryOver($ret['title']), true);
 			}
 			return $ret;
 		}
@@ -977,7 +984,7 @@ class Movie
 		if ($imdbID !== false) {
 			$this->service = $service;
 			if ($this->echooutput && $this->service !== '') {
-				$this->c->doEcho($this->c->headerOver($service . ' found IMDBid: ') . $this->c->primary('tt' . $imdbID));
+				$this->pdo->log->doEcho($this->pdo->log->headerOver($service . ' found IMDBid: ') . $this->pdo->log->primary('tt' . $imdbID));
 			}
 
 			$this->pdo->queryExec(sprintf('UPDATE releases SET imdbid = %s WHERE id = %d', $this->pdo->escapeString($imdbID), $id));
@@ -998,35 +1005,38 @@ class Movie
 	/**
 	 * Process releases with no IMDB ID's.
 	 *
-	 * @param string $releaseToWork
+	 * @param string $groupID    (Optional) ID of a group to work on.
+	 * @param string $guidChar   (Optional) First letter of a release GUID to use to get work.
+	 * @param int    $lookupIMDB (Optional) 0 Don't lookup IMDB, 1 lookup IMDB, 2 lookup IMDB on releases that were renamed.
 	 */
-	public function processMovieReleases($releaseToWork = '')
+	public function processMovieReleases($groupID = '', $guidChar = '', $lookupIMDB = 1)
 	{
-		$trakTv = new TraktTv();
+		if ($lookupIMDB == 0) {
+			return;
+		}
+		$trakTv = new TraktTv(['Settings' => $this->pdo]);
 
 		// Get all releases without an IMDB id.
-		if ($releaseToWork === '') {
-			$res = $this->pdo->query(
-				sprintf("
-					SELECT r.searchname, r.id
-					FROM releases r
-					WHERE r.imdbid IS NULL
-					AND r.nzbstatus = 1
-					AND r.categoryid BETWEEN 2000 AND 2999
-					LIMIT %d",
-					$this->movieqty
-				)
-			);
-			$movieCount = count($res);
-		} else {
-			$pieces = explode("           =+=            ", $releaseToWork);
-			$res = array(array('searchname' => $pieces[0], 'id' => $pieces[1]));
-			$movieCount = 1;
-		}
+		$res = $this->pdo->query(
+			sprintf("
+				SELECT r.searchname, r.id
+				FROM releases r
+				WHERE r.imdbid IS NULL
+				AND r.nzbstatus = 1
+				AND r.categoryid BETWEEN 2000 AND 2999
+				%s %s %s
+				LIMIT %d",
+				($groupID === '' ? '' : ('AND r.group_id = ' . $groupID)),
+				($guidChar === '' ? '' : ('AND r.guid ' . $this->pdo->likeString($guidChar, false, true))),
+				($lookupIMDB == 2 ? 'AND r.isrenamed = 1' : ''),
+				$this->movieqty
+			)
+		);
+		$movieCount = count($res);
 
 		if ($movieCount > 0) {
 			if ($this->echooutput && $movieCount > 1) {
-				$this->c->doEcho($this->c->header("Processing " . $movieCount . " movie releases."));
+				$this->pdo->log->doEcho($this->pdo->log->header("Processing " . $movieCount . " movie releases."));
 			}
 
 			// Loop over releases.
@@ -1046,7 +1056,7 @@ class Movie
 					}
 
 					if ($this->echooutput) {
-						$this->c->doEcho($this->c->primaryOver("Looking up: ") . $this->c->headerOver($movieName), true);
+						$this->pdo->log->doEcho($this->pdo->log->primaryOver("Looking up: ") . $this->pdo->log->headerOver($movieName), true);
 					}
 
 					// Check local DB.
@@ -1321,7 +1331,7 @@ class Movie
 	protected function parseMovieSearchName($releaseName)
 	{
 		// Check if it's foreign ?
-		$cat = new Categorize();
+		$cat = new Categorize(['Settings' => $this->pdo]);
 		if (!$cat->isMovieForeign($releaseName)) {
 			$name = $year = '';
 			$followingList = '[^\w]((1080|480|720)p|AC3D|Directors([^\w]CUT)?|DD5\.1|(DVD|BD|BR)(Rip)?|BluRay|divx|HDTV|iNTERNAL|LiMiTED|(Real\.)?Proper|RE(pack|Rip)|Sub\.?(fix|pack)|Unrated|WEB-DL|(x|H)[-._ ]?264|xvid)[^\w]';
@@ -1354,7 +1364,7 @@ class Movie
 					// Check if the name is long enough and not just numbers.
 				if (strlen($name) > 4 && !preg_match('/^\d+$/', $name)) {
 					if ($this->debug && $this->echooutput) {
-						$this->c->doEcho("DB name: {$releaseName}", true);
+						$this->pdo->log->doEcho("DB name: {$releaseName}", true);
 					}
 					$this->currentTitle = $name;
 					$this->currentYear  = ($year === '' ? false : $year);
@@ -1393,7 +1403,7 @@ class Movie
 	public function updateUpcoming()
 	{
 		if ($this->echooutput) {
-			$this->c->doEcho($this->c->header('Updating movie schedule using rotten tomatoes.'));
+			$this->pdo->log->doEcho($this->pdo->log->header('Updating movie schedule using rotten tomatoes.'));
 		}
 
 		$trKey = $this->pdo->getSetting('rottentomatokey');
@@ -1408,17 +1418,17 @@ class Movie
 				$test = @json_decode($retBo);
 				if (!$test || $retBo === "") {
 					if ($this->echooutput) {
-						exit($this->c->error("\nUnable to fetch from Rotten Tomatoes, verify your API Key\n"));
+						exit($this->pdo->log->error("\nUnable to fetch from Rotten Tomatoes, verify your API Key\n"));
 					}
 				}
 			}
 			if ($test) {
 				$cnt1 = $this->updateInsUpcoming('rottentomato', Movie::SRC_BOXOFFICE, $retBo);
 				if ($this->echooutput && $cnt1 !== false) {
-					$this->c->doEcho($this->c->header("Added/updated movies to the box office list."));
+					$this->pdo->log->doEcho($this->pdo->log->header("Added/updated movies to the box office list."));
 				} else {
 					if ($this->echooutput) {
-						$this->c->doEcho($this->c->primary("No new updates for box office list."));
+						$this->pdo->log->doEcho($this->pdo->log->primary("No new updates for box office list."));
 					}
 				}
 			}
@@ -1431,17 +1441,17 @@ class Movie
 				$test = @json_decode($retTh);
 				if (!$test || $retTh === "") {
 					if ($this->echooutput) {
-						exit($this->c->error("\nUnable to fetch from Rotten Tomatoes, verify your API Key\n"));
+						exit($this->pdo->log->error("\nUnable to fetch from Rotten Tomatoes, verify your API Key\n"));
 					}
 				}
 			}
 			if ($test) {
 				$cnt2 = $this->updateInsUpcoming('rottentomato', Movie::SRC_INTHEATRE, $retTh);
 				if ($this->echooutput && $cnt2 !== false) {
-					echo $this->c->header("Added/updated movies to the theaters list.");
+					echo $this->pdo->log->header("Added/updated movies to the theaters list.");
 				} else {
 					if ($this->echooutput) {
-						$this->c->doEcho($this->c->primary("No new updates for theaters list."));
+						$this->pdo->log->doEcho($this->pdo->log->primary("No new updates for theaters list."));
 					}
 				}
 			}
@@ -1454,17 +1464,17 @@ class Movie
 				$test = @json_decode($retOp);
 				if (!$test || $retOp === '') {
 					if ($this->echooutput) {
-						exit($this->c->error("\nUnable to fetch from Rotten Tomatoes, verify your API Key\n"));
+						exit($this->pdo->log->error("\nUnable to fetch from Rotten Tomatoes, verify your API Key\n"));
 					}
 				}
 			}
 			if ($test) {
 				$cnt3 = $this->updateInsUpcoming('rottentomato', Movie::SRC_OPENING, $retOp);
 				if ($this->echooutput && $cnt3 !== false) {
-					$this->c->doEcho($this->c->header("Added/updated movies to the opening list."));
+					$this->pdo->log->doEcho($this->pdo->log->header("Added/updated movies to the opening list."));
 				} else {
 					if ($this->echooutput) {
-						$this->c->doEcho($this->c->primary("No new updates for upcoming list."));
+						$this->pdo->log->doEcho($this->pdo->log->primary("No new updates for upcoming list."));
 					}
 				}
 			}
@@ -1477,17 +1487,17 @@ class Movie
 				$test = @json_decode($retUp);
 				if (!$test || $retUp === "") {
 					if ($this->echooutput) {
-						exit($this->c->error("\nUnable to fetch from Rotten Tomatoes, verify your API Key\n"));
+						exit($this->pdo->log->error("\nUnable to fetch from Rotten Tomatoes, verify your API Key\n"));
 					}
 				}
 			}
 			if ($test) {
 				$cnt4 = $this->updateInsUpcoming('rottentomato', Movie::SRC_UPCOMING, $retUp);
 				if ($this->echooutput && $cnt4 !== false) {
-					$this->c->doEcho($this->c->header("Added/updated movies to the upcoming list."));
+					$this->pdo->log->doEcho($this->pdo->log->header("Added/updated movies to the upcoming list."));
 				} else {
 					if ($this->echooutput) {
-						$this->c->doEcho($this->c->primary("No new updates for upcoming list."));
+						$this->pdo->log->doEcho($this->pdo->log->primary("No new updates for upcoming list."));
 					}
 				}
 			}
@@ -1500,23 +1510,23 @@ class Movie
 				$test = @json_decode($retDr);
 				if (!$test || $retDr === "") {
 					if ($this->echooutput) {
-						exit($this->c->error("\nUnable to fetch from Rotten Tomatoes, verify your API Key\n"));
+						exit($this->pdo->log->error("\nUnable to fetch from Rotten Tomatoes, verify your API Key\n"));
 					}
 				}
 			}
 			if ($test) {
 				$cnt5 = $this->updateInsUpcoming('rottentomato', Movie::SRC_DVD, $retDr);
 				if ($this->echooutput && $cnt5 !== false) {
-					$this->c->doEcho($this->c->header("Added/updated movies to the DVD list."));
+					$this->pdo->log->doEcho($this->pdo->log->header("Added/updated movies to the DVD list."));
 				} else {
 					if ($this->echooutput) {
-						$this->c->doEcho($this->c->primary("No new updates for upcoming list."));
+						$this->pdo->log->doEcho($this->pdo->log->primary("No new updates for upcoming list."));
 					}
 				}
 			}
 
 			if ($this->echooutput) {
-				$this->c->doEcho($this->c->header("Updated successfully."));
+				$this->pdo->log->doEcho($this->pdo->log->header("Updated successfully."));
 			}
 		}
 	}

@@ -26,12 +26,11 @@ class MiscSorter
 		$this->DEBUGGING = nZEDb_DEBUG;
 
 		$this->pdo = new Settings();
-		$this->category = new Categorize($this->echooutput);
-		$this->movie = new Movie($this->echooutput);
-		$this->nfolib = new Nfo($this->echooutput);
-		$this->nc = new ReleaseCleaning();
-		$this->groups = new Groups();
-		$this->c = new ColorCLI();
+		$this->category = new Categorize(['Settings' => $this->pdo]);
+		$this->movie = new Movie(['Echo' => $this->echooutput, 'Settings' => $this->pdo]);
+		$this->nfolib = new Nfo(['Echo' => $this->echooutput, 'Settings' => $this->pdo]);
+		$this->nc = new ReleaseCleaning($this->pdo);
+		$this->groups = new Groups(['Settings' => $this->pdo]);
 
 		//$res = $this->pdo->queryExec("SET NAMES 'utf8'");
 		//$res = $this->pdo->queryExec("SET CHARACTER SET 'utf8'");
@@ -189,7 +188,7 @@ class MiscSorter
 		if ($debug == '')
 			$debug = $this->DEBUGGING;
 		$n = "\n";
-		$groups = new Groups();
+		$groups = $this->groups;
 
 		$release = $this->pdo->query("SELECT r.searchname as searchname, categoryid as cat, g.name as name FROM releases r INNER JOIN groups g ON r.group_id = g.id WHERE r.id = {$id}");
 		$oldcatname = $this->category->getNameByID($release[0]['cat']);
@@ -199,8 +198,8 @@ class MiscSorter
 		if ($name != '') {
 			$query .= ", isrenamed = 1, iscategorized = 1, searchname = " . $this->pdo->escapeString($name);
 			$name = preg_replace(array('/^[-=_\.:\s]+/', '/[-=_\.:\s]+$/'), '', $name);
-			echo $n . $n . $this->c->headerOver("New name:  ") . $this->c->primary($name) .
-			$this->c->headerOver("Old name:  ") . $this->c->primaryOver($release[0]["searchname"]);
+			echo $n . $n . $this->pdo->log->headerOver("New name:  ") . $this->pdo->log->primary($name) .
+			$this->pdo->log->headerOver("Old name:  ") . $this->pdo->log->primaryOver($release[0]["searchname"]);
 		}
 
 		switch ($type) {
@@ -227,11 +226,11 @@ class MiscSorter
 			default:
 				break;
 		}
-		echo $n . $this->c->headerOver("New cat:   ") . $this->c->primary($newcatname) .
-		$this->c->headerOver("Old cat:   ") . $this->c->primary($oldcatname) .
-		$this->c->headerOver("Group:     ") . $this->c->primary($release[0]['name']) .
-		$this->c->headerOver("Method:    ") . $this->c->primary('sorter ' . $type) .
-		$this->c->headerOver("ReleaseID: ") . $this->c->primary($id);
+		echo $n . $this->pdo->log->headerOver("New cat:   ") . $this->pdo->log->primary($newcatname) .
+		$this->pdo->log->headerOver("Old cat:   ") . $this->pdo->log->primary($oldcatname) .
+		$this->pdo->log->headerOver("Group:     ") . $this->pdo->log->primary($release[0]['name']) .
+		$this->pdo->log->headerOver("Method:    ") . $this->pdo->log->primary('sorter ' . $type) .
+		$this->pdo->log->headerOver("ReleaseID: ") . $this->pdo->log->primary($id);
 
 		$query .= " WHERE id = {$id}";
 		//$this->doecho($query);
@@ -389,7 +388,7 @@ class MiscSorter
 				$query = "SELECT id FROM bookinfo WHERE asin = '" . (string) $amaz->Items->Item->ASIN . "'";
 				$rel = $this->pdo->query($query);
 				if (count($rel) == 0) {
-					$book = new Books($this->echooutput);
+					$book = new Books(['Echo' => $this->echooutput, 'Settings' => $this->pdo]);
 					$bookId = $book->updateBookInfo('', $amaz);
 					unset($book);
 				} else {
@@ -417,9 +416,9 @@ class MiscSorter
 				$query = "SELECT * FROM musicinfo WHERE asin = '" . (string) $amaz->Items->Item->ASIN . "'";
 				$rel = $this->pdo->query($query);
 				if (count($rel) == 0) {
-					$music = new Music();
+					//$music = new Music();
 					//$musicId = $music->updateMusicInfo('', '', $amaz)
-					unset($music);
+					//unset($music);
 				} else
 					$musicId = $rel[0]['id'];
 
@@ -453,12 +452,12 @@ class MiscSorter
 			return false;
 		}
 
-		$nzb1 = new NZB();
+		$nzb1 = new NZB($this->pdo);
 		$nzbpath = $nzb1->NZBPath($guid);
 		$nzb = array();
 
 		if ($nzbpath !== false) {
-			$xmlObj = @simplexml_load_file('compress.zlib://' . $nzbpath);
+			$xmlObj = @simplexml_load_file(nzedb\utility\Utility::unzipGzipFile($nzbpath));
 			if ($xmlObj && strtolower($xmlObj->getName()) == 'nzb') {
 				foreach ($xmlObj->file as $file) {
 					$nzbfile = array();
@@ -740,7 +739,7 @@ class MiscSorter
 	function nfosorter($category = Category::CAT_PARENT_MISC, $id = 0, $nntp)
 	{
 		if (!isset($nntp))
-			exit($this->c->error("Not connected to usenet(miscsorter->nfosorter).\n"));
+			exit($this->pdo->log->error("Not connected to usenet(miscsorter->nfosorter).\n"));
 
 		$this->idarr = $this->getIDs($category);
 		if ($id != 0)

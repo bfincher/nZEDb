@@ -38,10 +38,10 @@ CREATE TABLE         binaries (
   binaryhash   VARCHAR(255)        NOT NULL DEFAULT '0',
   partcheck    BIT                 NOT NULL DEFAULT 0,
   partsize     BIGINT UNSIGNED     NOT NULL DEFAULT '0',
-  PRIMARY KEY (id),
-  INDEX ix_binary_binaryhash (binaryhash),
-  INDEX ix_binary_partcheck  (partcheck),
-  INDEX ix_binary_collection (collectionid)
+  PRIMARY KEY                       (id),
+  UNIQUE INDEX ix_binary_binaryhash (binaryhash),
+  INDEX        ix_binary_partcheck  (partcheck),
+  INDEX        ix_binary_collection (collectionid)
 )
   ENGINE          = MYISAM
   DEFAULT CHARSET = utf8
@@ -438,7 +438,7 @@ CREATE TABLE         xxxinfo (
   id          INT(10) UNSIGNED               NOT NULL AUTO_INCREMENT,
   title       VARCHAR(255)                   NOT NULL,
   tagline     VARCHAR(1024)                  NOT NULL,
-  plot        VARCHAR(1024)                  NOT NULL,
+  plot        BLOB                           NULL DEFAULT NULL,
   genre       VARCHAR(64)                    NOT NULL,
   director    VARCHAR(64)                    DEFAULT NULL,
   actors      VARCHAR(2000)                  NOT NULL,
