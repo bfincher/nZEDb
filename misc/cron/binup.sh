@@ -66,7 +66,9 @@ echo $count
 cd ${NEWZNAB_PATH}
 #php backfill.php safe 100000 >> $LOG_DIR/backfill.log
 php ${NEWZNAB_BINUP} >> $BIN_LOG 2>&1
+date >> $BIN_LOG
 php ${NEWZNAB_RELUP} >> $REL_LOG 2>&1
+date >> $REL_LOG
 php decrypt_hashes.php 2000 >> $LOG_DIR/update.log 2>&1
 
 cd ${TESTING_PATH}/Release
@@ -86,6 +88,7 @@ php postprocess.php all true >> $LOG_DIR/update.log 2>&1
 #php clean_by_cat.php >> $LOG_DIR/update.log
 
 echo "Done" >> $LOG_DIR/update.log
+date >> $LOG_DIR/update.log
 
 rm $PIDFILE
 
