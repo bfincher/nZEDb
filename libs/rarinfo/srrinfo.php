@@ -48,7 +48,6 @@ require_once dirname(__FILE__) . '/rarinfo.php';
  */
 class SrrInfo extends RarInfo
 {
-public $isEncrypted = false;
 	// ------ Class constants -----------------------------------------------------
 
 	/**#@+

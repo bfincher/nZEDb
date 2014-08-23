@@ -77,7 +77,6 @@ require_once dirname(__FILE__) . '/szipinfo.php';
  */
 class ArchiveInfo extends ArchiveReader
 {
-public $isEncrypted = false;
 	/**#@+
 	 * Supported archive types.
 	 */

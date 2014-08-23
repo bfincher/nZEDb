@@ -43,7 +43,6 @@ require_once dirname(__FILE__) . '/archivereader.php';
  */
 class Par2Info extends ArchiveReader
 {
-public $isEncrypted = false;
 	// ------ Class constants -----------------------------------------------------
 
 	/**#@+
