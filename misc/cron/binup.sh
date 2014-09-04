@@ -64,7 +64,7 @@ echo $count > $countfile
 echo $count
 
 cd ${TESTING_PATH}
-php nzb-import.php /mnt/nfs/nzbfiles true true false 1000 >> $BIN_LOG 2>&1
+php nzb-import.php /data_local/nzbimport true true false 1000 >> $BIN_LOG 2>&1
 
 cd ${NEWZNAB_PATH}
 #php backfill.php safe 100000 >> $LOG_DIR/backfill.log
@@ -75,8 +75,6 @@ date >> $REL_LOG
 php decrypt_hashes.php 2000 >> $LOG_DIR/update.log 2>&1
 
 cd ${TESTING_PATH}/Release
-php fixReleaseNames.php 3 true all yes >> $LOG_DIR/update.log 2>&1
-php fixReleaseNames.php 1 true all yes >> $LOG_DIR/update.log 2>&1
 php removeCrapReleases.php true 6 >> $LOG_DIR/update.log 2>&1
 php delete_disabled_category_releases.php true >> $LOG_DIR/update.log 2>&1
 
@@ -93,7 +91,16 @@ python postprocess_threaded.py tv >> $LOG_DIR/update.log 2>&1
 cd ${NEWZNAB_PATH}/
 php postprocess.php pre true >> $LOG_DIR/update.log 2>&1
 php postprocess.php sharing true >> $LOG_DIR/update.log 2>&1
+#php postprocess.php music true >> $LOG_DIR/update.log 2>&1
 
+
+cd ${TESTING_PATH}/Release
+php fixReleaseNames.php 3 true all yes >> $LOG_DIR/update.log 2>&1
+php fixReleaseNames.php 1 true all yes >> $LOG_DIR/update.log 2>&1
+#php fixReleaseNames.php 7 true all yes >> $LOG_DIR/update.log 2>&1
+
+#cd ${NEWZNAB_PATH}/python
+#python fixreleasenames_threaded.py par2 >> $LOG_DIR/update.log 2>&1
 #cd ${TESTING_PATH}
 #php clean_by_cat.php >> $LOG_DIR/update.log
 
