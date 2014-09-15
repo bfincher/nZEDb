@@ -64,7 +64,7 @@ echo $count > $countfile
 echo $count
 
 cd ${TESTING_PATH}
-php nzb-import.php /data_local/nzbimport true true false 1000 >> $BIN_LOG 2>&1
+php nzb-import.php /data_local/nzbimport true true false 750 >> $BIN_LOG 2>&1
 
 cd ${NEWZNAB_PATH}
 #php backfill.php safe 100000 >> $LOG_DIR/backfill.log
@@ -89,16 +89,16 @@ python postprocess_threaded.py movie >> $LOG_DIR/update.log 2>&1
 python postprocess_threaded.py tv >> $LOG_DIR/update.log 2>&1
 
 cd ${NEWZNAB_PATH}/
+php postprocess.php music true >> $LOG_DIR/update.log 2>&1
 php postprocess.php pre true >> $LOG_DIR/update.log 2>&1
 php postprocess.php sharing true >> $LOG_DIR/update.log 2>&1
 php match_prefiles.php  2000 show >> $LOG_DIR/update.log 2>&1
-#php postprocess.php music true >> $LOG_DIR/update.log 2>&1
 
 
 cd ${TESTING_PATH}/Release
 php fixReleaseNames.php 3 true all yes >> $LOG_DIR/update.log 2>&1
 php fixReleaseNames.php 1 true all yes >> $LOG_DIR/update.log 2>&1
-#php fixReleaseNames.php 7 true all yes >> $LOG_DIR/update.log 2>&1
+php fixReleaseNames.php 7 true other yes >> $LOG_DIR/update.log 2>&1
 
 #cd ${NEWZNAB_PATH}/python
 #python fixreleasenames_threaded.py par2 >> $LOG_DIR/update.log 2>&1
