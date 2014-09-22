@@ -63,8 +63,8 @@ fi
 echo $count > $countfile
 echo $count
 
-cd ${TESTING_PATH}
-php nzb-import.php /data_local/nzbimport true true false 750 >> $BIN_LOG 2>&1
+#cd ${TESTING_PATH}
+#php nzb-import.php /data_local/nzbimport true true false 1000 >> $BIN_LOG 2>&1
 
 cd ${NEWZNAB_PATH}
 #php backfill.php safe 100000 >> $LOG_DIR/backfill.log
@@ -83,7 +83,7 @@ php delete_disabled_category_releases.php true >> $LOG_DIR/update.log 2>&1
 #python postprocess_threaded.py all >> $LOG_DIR/update.log
 
 cd ${NEWZNAB_PATH}/python
-python postprocess_threaded.py additional >> $LOG_DIR/update.log 2>&1
+nice python postprocess_threaded.py additional >> $LOG_DIR/update.log 2>&1
 python postprocess_threaded.py nfo >> $LOG_DIR/update.log 2>&1
 python postprocess_threaded.py movie >> $LOG_DIR/update.log 2>&1
 python postprocess_threaded.py tv >> $LOG_DIR/update.log 2>&1
