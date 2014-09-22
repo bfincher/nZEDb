@@ -4,7 +4,7 @@ require_once dirname(__FILE__) . '/../../../www/config.php';
 use nzedb\db\Settings;
 
 $pdo = new Settings();
-$consoletools = new ConsoleTools(['ColorCLI' => $pdo->log]);
+$consoletools = new \ConsoleTools(['ColorCLI' => $pdo->log]);
 $ran = false;
 
 if (isset($argv[1]) && $argv[1] === "all") {
@@ -26,7 +26,7 @@ if (isset($argv[1]) && $argv[1] === "all") {
 		echo $pdo->log->header("Resetting all postprocessing");
 		$qry = $pdo->queryDirect("SELECT id FROM releases");
 		$affected = 0;
-		if ($qry instanceof Traversable) {
+		if ($qry instanceof \Traversable) {
 			$total = $qry->rowCount();
 			foreach ($qry as $releases) {
 				$pdo->queryExec(
@@ -64,7 +64,7 @@ if (isset($argv[1]) && ($argv[1] === "consoles" || $argv[1] === "all")) {
 		$total = 0;
 	}
 	$concount = 0;
-	if ($qry instanceof Traversable) {
+	if ($qry instanceof \Traversable) {
 		foreach ($qry as $releases) {
 			$pdo->queryExec("UPDATE releases SET consoleinfoid = NULL WHERE id = " . $releases['id']);
 			$consoletools->overWritePrimary("Resetting Console Releases:  " . $consoletools->percentString(++$concount, $total));
@@ -92,7 +92,7 @@ if (isset($argv[1]) && ($argv[1] === "games" || $argv[1] === "all")) {
 		$total = 0;
 	}
 	$concount = 0;
-	if ($qry instanceof Traversable) {
+	if ($qry instanceof \Traversable) {
 		foreach ($qry as $releases) {
 			$pdo->queryExec("UPDATE releases SET gamesinfo_id = 0 WHERE id = " . $releases['id']);
 			$consoletools->overWritePrimary("Resetting Games Releases:  " .	$consoletools->percentString(++$concount, $total));
@@ -120,7 +120,7 @@ if (isset($argv[1]) && ($argv[1] === "movies" || $argv[1] === "all")) {
 		$total = 0;
 	}
 	$concount = 0;
-	if ($qry instanceof Traversable) {
+	if ($qry instanceof \Traversable) {
 		foreach ($qry as $releases) {
 			$pdo->queryExec("UPDATE releases SET imdbid = NULL WHERE id = " . $releases['id']);
 			$consoletools->overWritePrimary("Resetting Movie Releases:  " . $consoletools->percentString(++$concount, $total));
@@ -144,7 +144,7 @@ if (isset($argv[1]) && ($argv[1] === "music" || $argv[1] === "all")) {
 	$qry = $pdo->queryDirect("SELECT id FROM releases" . $where);
 	$total = $qry->rowCount();
 	$concount = 0;
-	if ($qry instanceof Traversable) {
+	if ($qry instanceof \Traversable) {
 		foreach ($qry as $releases) {
 			$pdo->queryExec("UPDATE releases SET musicinfoid = NULL WHERE id = " . $releases['id']);
 			$consoletools->overWritePrimary("Resetting Music Releases:  " .	$consoletools->percentString(++$concount, $total));
@@ -170,7 +170,7 @@ if (isset($argv[1]) && ($argv[1] === "misc" || $argv[1] === "all")) {
 		$total = 0;
 	}
 	$concount = 0;
-	if ($qry instanceof Traversable) {
+	if ($qry instanceof \Traversable) {
 		foreach ($qry as $releases) {
 			$pdo->queryExec("UPDATE releases SET passwordstatus = -1, haspreview = -1, jpgstatus = 0, videostatus = 0, audiostatus = 0 WHERE id = " . $releases['id']);
 			$consoletools->overWritePrimary("Resetting Releases:  " . $consoletools->percentString(++$concount, $total));
@@ -198,13 +198,42 @@ if (isset($argv[1]) && ($argv[1] === "tv" || $argv[1] === "all")) {
 		$total = 0;
 	}
 	$concount = 0;
-	if ($qry instanceof Traversable) {
+	if ($qry instanceof \Traversable) {
 		foreach ($qry as $releases) {
 			$pdo->queryExec("UPDATE releases SET rageid = -1 WHERE id = " . $releases['id']);
 			$consoletools->overWritePrimary("Resetting TV Releases:  " . $consoletools->percentString(++$concount, $total));
 		}
 	}
 	echo $pdo->log->header("\n" . number_format($concount) . " rageID's reset.");
+}
+if (isset($argv[1]) && ($argv[1] === "anime" || $argv[1] === "all")) {
+	$ran = true;
+	if (isset($argv[3]) && $argv[3] === "truncate") {
+		$pdo->queryExec("TRUNCATE TABLE anidb_info");
+		$pdo->queryExec("TRUNCATE TABLE anidb_episodes");
+	}
+	if (isset($argv[2]) && $argv[2] === "true") {
+		echo $pdo->log->header("Resetting all Anime postprocessing");
+		$where = '  WHERE rageid != -1';
+	} else {
+		echo $pdo->log->header("Resetting all failed Anime postprocessing");
+		$where = " WHERE anidbid BETWEEN -2 AND -1 AND categoryid = 5070";
+	}
+
+	$qry      = $pdo->queryDirect("SELECT id FROM releases" . $where);
+	if ($qry !== false ) {
+		$total = $qry->rowCount();
+	} else {
+		$total = 0;
+	}
+	$concount = 0;
+	if ($qry instanceof \Traversable) {
+		foreach ($qry as $releases) {
+			$pdo->queryExec("UPDATE releases SET anidbid = NULL WHERE id = " . $releases['id']);
+			$consoletools->overWritePrimary("Resetting Anime Releases:  " . $consoletools->percentString(++$concount, $total));
+		}
+	}
+	echo $pdo->log->header("\n" . number_format($concount) . " anidbID's reset.");
 }
 if (isset($argv[1]) && ($argv[1] === "books" || $argv[1] === "all")) {
 	$ran = true;
@@ -222,7 +251,7 @@ if (isset($argv[1]) && ($argv[1] === "books" || $argv[1] === "all")) {
 	$qry = $pdo->queryDirect("SELECT id FROM releases" . $where);
 	$total = $qry->rowCount();
 	$concount = 0;
-	if ($qry instanceof Traversable) {
+	if ($qry instanceof \Traversable) {
 		foreach ($qry as $releases) {
 			$pdo->queryExec("UPDATE releases SET bookinfoid = NULL WHERE id = " . $releases['id']);
 			$consoletools->overWritePrimary("Resetting Book Releases:  " . $consoletools->percentString(++$concount, $total));
@@ -245,7 +274,7 @@ if (isset($argv[1]) && ($argv[1] === "xxx" || $argv[1] === "all")) {
 
 	$qry = $pdo->queryDirect("SELECT id FROM releases" . $where);
 	$concount = 0;
-	if ($qry instanceof Traversable) {
+	if ($qry instanceof \Traversable) {
 		$total = $qry->rowCount();
 		foreach ($qry as $releases) {
 			$pdo->queryExec("UPDATE releases SET xxxinfo_id = 0 WHERE id = " . $releases['id']);
@@ -270,7 +299,7 @@ if (isset($argv[1]) && ($argv[1] === "nfos" || $argv[1] === "all")) {
 
 	$qry = $pdo->queryDirect("SELECT id FROM releases" . $where);
 	$concount = 0;
-	if ($qry instanceof Traversable) {
+	if ($qry instanceof \Traversable) {
 		$total = $qry->rowCount();
 		foreach ($qry as $releases) {
 			$pdo->queryExec("UPDATE releases SET nfostatus = -1 WHERE id = " . $releases['id']);
@@ -294,6 +323,7 @@ if ($ran === false) {
 			. "php reset_postprocessing.php music true       ...: To reset all music.\n"
 			. "php reset_postprocessing.php misc true        ...: To reset all misc.\n"
 			. "php reset_postprocessing.php tv true          ...: To reset all tv.\n"
+			. "php reset_postprocessing.php anime true       ...: To reset all anime.\n"
 			. "php reset_postprocessing.php books true       ...: To reset all books.\n"
 			. "php reset_postprocessing.php xxx true         ...: To reset all xxx.\n"
 			. "php reset_postprocessing.php nfos true        ...: To reset all nfos.\n"

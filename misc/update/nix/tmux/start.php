@@ -29,7 +29,7 @@ if (count($nntpkill) === 0) {
 	exec("tmux kill-session -t NNTPProxy");
 }
 
-$t = new Tmux();
+$t = new \Tmux();
 $tmux = $t->get();
 $tmux_session = (isset($tmux->tmux_session)) ? $tmux->tmux_session : 0;
 $seq = (isset($tmux->sequential)) ? $tmux->sequential : 0;
@@ -50,7 +50,7 @@ function writelog($pane)
 {
 	$path = dirname(__FILE__) . "/logs";
 	$getdate = gmDate("Ymd");
-	$tmux = new Tmux();
+	$tmux = new \Tmux();
 	$logs = $tmux->get()->write_logs;
 	if ($logs == 1) {
 		return "2>&1 | tee -a $path/$pane-$getdate.log";
@@ -120,7 +120,7 @@ sleep(2);
 
 function start_apps($tmux_session)
 {
-	$t = new Tmux();
+	$t = new \Tmux();
 	$tmux = $t->get();
 	$htop = $tmux->htop;
 	$vnstat = $tmux->vnstat;
@@ -186,7 +186,7 @@ function window_proxy($tmux_session, $window)
 		$nntpproxypy = $DIR . "update/python/nntpproxy.py";
 		if (file_exists($DIR . "update/python/lib/nntpproxy_a.conf")) {
 			$nntpproxyconf = $DIR . "update/python/lib/nntpproxy_a.conf";
-			exec("tmux selectp -t 0; tmux splitw -t $tmux_session:$window -h -p 50 'printf \"\033]2;NNTPProxy\033\" && python $nntpproxypy $nntpproxyconf'");
+			exec("tmux selectp -t $tmux_session:$window.0; tmux splitw -t $tmux_session:$window -h -p 50 'printf \"\033]2;NNTPProxy\033\" && python $nntpproxypy $nntpproxyconf'");
 		}
 	}
 }
@@ -195,14 +195,14 @@ function window_utilities($tmux_session)
 {
 	exec("tmux new-window -t $tmux_session -n utils 'printf \"\033]2;fixReleaseNames\033\"'");
 	exec("tmux splitw -t $tmux_session:1 -v -p 50 'printf \"\033]2;updateTVandTheaters\033\"'");
-	exec("tmux selectp -t 0; tmux splitw -t $tmux_session:1 -h -p 50 'printf \"\033]2;removeCrapReleases\033\"'");
-	exec("tmux selectp -t 2; tmux splitw -t $tmux_session:1 -h -p 50 'printf \"\033]2;decryptHashes\033\"'");
+	exec("tmux selectp -t $tmux_session:1.0; tmux splitw -t $tmux_session:1 -h -p 50 'printf \"\033]2;removeCrapReleases\033\"'");
+	exec("tmux selectp -t $tmux_session:1.2; tmux splitw -t $tmux_session:1 -h -p 50 'printf \"\033]2;decryptHashes\033\"'");
 }
 
 function window_stripped_utilities($tmux_session)
 {
 	exec("tmux new-window -t $tmux_session -n utils 'printf \"\033]2;updateTVandTheaters\033\"'");
-	exec("tmux selectp -t 0; tmux splitw -t $tmux_session:1 -h -p 50 'printf \"\033]2;postprocessing_amazon\033\"'");
+	exec("tmux selectp -t $tmux_session:1.0; tmux splitw -t $tmux_session:1 -h -p 50 'printf \"\033]2;postprocessing_amazon\033\"'");
 }
 
 function window_ircscraper($tmux_session)
@@ -227,7 +227,7 @@ function window_sharing($tmux_session)
 {
 	$pdo = new Settings();
 	$sharing = $pdo->queryOneRow('SELECT enabled, posting, fetching FROM sharing');
-	$t = new Tmux();
+	$t = new \Tmux();
 	$tmux = $t->get();
 	$tmux_share = (isset($tmux->run_sharing)) ? $tmux->run_sharing : 0;
 

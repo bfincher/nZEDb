@@ -58,7 +58,7 @@
 						<div class="movcover" style="padding-bottom:5px;">
 							<a
 								class="title thumbnail"
-								title="View giantbomb page"
+								title="View page"
 								target="_blank"
 								href="{$site->dereferrer_link}{$result.url}"
 								width="130px"
@@ -72,6 +72,7 @@
 							></a>
 							<div class="relextra" style="margin-top:5px;">
 								{if $result.url != ""}
+									{if $result.classused == "gb"}
 									<a
 										class="label"
 										target="_blank"
@@ -79,6 +80,34 @@
 										name="giantbomb{$result.gamesinfo_id}"
 										title="View giantbomb page"
 									><img src="{$smarty.const.WWW_TOP}/themes_shared/images/icons/giantbomb.png"></a>
+									{/if}
+									{if $result.classused == "steam"}
+										<a
+											class="label"
+											target="_blank"
+											href="{$site->dereferrer_link}{$result.url}"
+											name="Steam{$result.gamesinfo_id}"
+											title="View Steam page"
+											><img src="{$smarty.const.WWW_TOP}/themes_shared/images/icons/steam.png"></a>
+									{/if}
+									{if $result.classused == "gl"}
+										<a
+											class="label"
+											target="_blank"
+											href="{$site->dereferrer_link}{$result.url}"
+											name="Greenlight{$result.gamesinfo_id}"
+											title="View Greenlight page"
+											><img src="{$smarty.const.WWW_TOP}/themes_shared/images/icons/greenlight.png"></a>
+									{/if}
+									{if $result.classused == "desura"}
+										<a
+											class="label"
+											target="_blank"
+											href="{$site->dereferrer_link}{$result.url}"
+											name="Desura{$result.gamesinfo_id}"
+											title="View Desura page"
+											><img src="{$smarty.const.WWW_TOP}/themes_shared/images/icons/desura.png"></a>
+									{/if}
 								{/if}
 								<a
 									class="label"
@@ -91,7 +120,7 @@
 									class="label"
 									target="_blank"
 									href="{$site->dereferrer_link}http://www.gamespot.com/search/?q={$result.title|escape:"htmlall"}"
-									name="ign{$result.id}"
+									name="gamespot{$result.id}"
 									title="Find game on Gamespot"
 								><img src="{$smarty.const.WWW_TOP}/themes_shared/images/icons/gamespot.png"></a>
 							</div>
