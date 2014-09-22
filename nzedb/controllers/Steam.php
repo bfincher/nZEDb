@@ -2,14 +2,8 @@
 
 require_once nZEDb_LIBS . 'simple_html_dom.php';
 
-Class Steam
+class Steam
 {
-
-	const STEAMURL = "http://store.steampowered.com";
-	const STEAMVARS = "/search/?category1=998&os=win&sort_order=ASC&page=1&term=";
-	const AGECHECKURL = "http://store.steampowered.com/agecheck/app/";
-	const GAMEURL = "http://store.steampowered.com/app/";
-	const CDNURL = "http://cdn.akamai.steamstatic.com/steam/apps/";
 
 	/**
 	 * @var
@@ -21,15 +15,16 @@ Class Steam
 	 */
 	public $searchTerm;
 
+	const AGECHECKURL = "http://store.steampowered.com/agecheck/app/";
+	const CDNURL = "http://cdn.akamai.steamstatic.com/steam/apps/";
+	const GAMEURL = "http://store.steampowered.com/app/";
+	const STEAMURL = "http://store.steampowered.com";
+	const STEAMVARS = "/search/?category1=998&os=win&sort_order=ASC&page=1&term=";
+
 	/**
 	 * @var bool
 	 */
 	protected $_ageCheckSet = false;
-
-	/**
-	 * @var string
-	 */
-	protected $_directURL = '';
 
 	/**
 	 * @var bool
@@ -40,6 +35,11 @@ Class Steam
 	 * @var
 	 */
 	protected $_ch;
+
+	/**
+	 * @var string
+	 */
+	protected $_directURL = '';
 
 	/**
 	 * @var
@@ -101,7 +101,7 @@ Class Steam
 		$this->_html = new simple_html_dom();
 		$this->_editHtml = new simple_html_dom();
 		if (isset($this->cookie)) {
-			@$this->_getURL(self::STEAMURL);
+			$this->getUrl(self::STEAMURL);
 		}
 	}
 
@@ -168,12 +168,9 @@ Class Steam
 	 */
 	public function rating()
 	{
-		if (isset($this->_response) && isset($this->_title)) {
 			if ($this->_ret = $this->_html->find("div#game_area_metascore", 0)) {
 				$this->_res['rating'] = (int)$this->_ret->plaintext;
 			}
-		}
-
 		return $this->_res;
 	}
 
@@ -184,7 +181,6 @@ Class Steam
 	 */
 	public function images()
 	{
-		if (isset($this->_response) && isset($this->_title)) {
 			if ($this->_ret = $this->_html->find("img.game_header_image", 0)) {
 				$this->_res['cover'] = $this->_ret->src;
 			}
@@ -198,7 +194,6 @@ Class Steam
 
 				}
 			}
-		}
 
 		return $this->_res;
 	}
@@ -240,7 +235,7 @@ Class Steam
 	{
 			if (preg_match('/store.steampowered.com\/video\//', $this->_response)) {
 				$this->_res['trailer'] = self::STEAMURL . '/video/' . $this->_steamGameID;
-				@$this->_getURL($this->_res['trailer']);
+				$this->getUrl($this->_res['trailer']);
 				if (preg_match('@FILENAME\:\s+(?<videourl>\"\b(([\w-]+://?|www[.])[^\s()<>]+(?:\([\w\d]+\)|([^[:punct:]\s]|/)))")@',
 							   $this->_response,
 							   $matches)
@@ -269,7 +264,7 @@ Class Steam
 			return false;
 		}
 
-		if ($this->_getURL(self::STEAMURL . self::STEAMVARS . rawurlencode($this->searchTerm)) !== false) {
+		if ($this->getUrl(self::STEAMURL . self::STEAMVARS . rawurlencode($this->searchTerm)) !== false) {
 			$title = null;
 			if ($this->_ret = $this->_html->find("div.search_pagination_left", 1)) {
 				if (preg_match('/\d+ of (?<total>\d+)/', trim($this->_ret->plaintext), $matches)) {
@@ -277,23 +272,20 @@ Class Steam
 				}
 				if ($this->_totalResults > 0) {
 					foreach ($this->_html->find("a.search_result_row") as $result) {
-						if (preg_match('/\<h4\>(?<name>.*)\<\/h4\>/i',
-									   $result->innertext,
-									   $matches)
-						) {
-							$title = $matches['name'];
+						if (preg_match('/\<h4\>(?<name>.*)\<\/h4\>/i', $result->innertext, $matches)){
+							$title = (string)trim($matches['name']);
 						}
 						if (isset($title)) {
-							similar_text($title, $this->searchTerm, $p);
+							similar_text(strtolower($title), strtolower($this->searchTerm), $p);
 							if ($p > 90) {
 								$this->_title = $title;
 								if (isset($result->href)) {
 									preg_match('/\/app\/(?<id>\d+)\//', $result->href, $matches);
 									$this->_steamGameID = $matches['id'];
 									$this->_directURL = self::GAMEURL . $this->_steamGameID . '/';
-									@$this->_getURL($result->href);
-									@$this->ageCheck();
-									break;
+									$this->getUrl($result->href);
+									$this->ageCheck();
+									return true;
 								} else {
 									return false;
 								}
@@ -366,11 +358,11 @@ Class Steam
 					"ageYear" => "1966"
 				);
 				// Do twice so steam can set a birthtime/lastagecheckage cookie value
-				@$this->_getURL(self::AGECHECKURL . $this->_steamGameID . '/', true);
-				@$this->_getURL(self::AGECHECKURL . $this->_steamGameID . '/', true);
+				$this->getUrl(self::AGECHECKURL . $this->_steamGameID . '/', true);
+				$this->getUrl(self::AGECHECKURL . $this->_steamGameID . '/', true);
 			}
 		}
-		@$this->_getURL(self::GAMEURL . $this->_steamGameID . '/');
+		$this->getUrl(self::GAMEURL . $this->_steamGameID . '/');
 	}
 
 	/**
@@ -381,7 +373,7 @@ Class Steam
 	 *
 	 * @return bool
 	 */
-	private function _getURL($fetchURL, $usePost = false)
+	private function getUrl($fetchURL, $usePost = false)
 	{
 		if (isset($fetchURL)) {
 			$this->_ch = curl_init($fetchURL);
@@ -399,6 +391,7 @@ Class Steam
 			curl_setopt($this->_ch, CURLOPT_COOKIEJAR, $this->cookie);
 			curl_setopt($this->_ch, CURLOPT_COOKIEFILE, $this->cookie);
 		}
+		curl_setopt_array($this->_ch, nzedb\utility\Utility::curlSslContextOptions());
 		$this->_response = curl_exec($this->_ch);
 		if (!$this->_response) {
 			curl_close($this->_ch);

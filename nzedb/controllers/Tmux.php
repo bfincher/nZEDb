@@ -9,6 +9,8 @@ class Tmux
 	 */
 	public $pdo;
 
+	public $tmux_session;
+
 	function __construct(Settings $pdo = null)
 	{
 		$this->pdo = (empty($pdo) ? new Settings() : $pdo);
@@ -43,12 +45,7 @@ class Tmux
 		$pdo = $this->pdo;
 		$where = ($setting !== '' ? sprintf('WHERE setting = %s', $pdo->escapeString($setting)) : '');
 
-		$rows = $pdo->query(
-					sprintf(
-						"SELECT * FROM tmux %s",
-						$where
-					)
-		);
+		$rows = $pdo->query(sprintf("SELECT * FROM tmux %s", $where));
 
 		if ($rows === false) {
 			return false;
@@ -247,6 +244,7 @@ class Tmux
 					(%2\$s 'lookupxxx') AS processxxx,
 					(%2\$s 'lookupimdb') AS processmovies,
 					(%2\$s 'lookuptvrage') AS processtvrage,
+					(%2\$s 'lookupanidb') AS processanime,
 					(%2\$s 'lookupnfo') AS processnfo,
 					(%2\$s 'lookuppar2') AS processpar2,
 					(%2\$s 'nzbthreads') AS nzbthreads,
@@ -380,13 +378,14 @@ class Tmux
 			case 1:
 				return sprintf("SELECT
 					(SELECT COUNT(*) FROM releases WHERE nzbstatus = 1 AND categoryid BETWEEN 5000 AND 5999 AND rageid = -1) AS processtvrage,
+					(SELECT COUNT(*) FROM releases WHERE nzbstatus = 1 AND categoryid = 5070 AND anidbid IS NULL) AS processanime,
 					(SELECT COUNT(*) FROM releases WHERE nzbstatus = 1 AND categoryid BETWEEN 2000 AND 2999 AND imdbid IS NULL) AS processmovies,
 					(SELECT COUNT(*) FROM releases WHERE nzbstatus = 1 AND categoryid IN (3010, 3040, 3050) AND musicinfoid IS NULL) AS processmusic,
 					(SELECT COUNT(*) FROM releases WHERE nzbstatus = 1 AND categoryid BETWEEN 1000 AND 1999 AND consoleinfoid IS NULL) AS processconsole,
 					(SELECT COUNT(*) FROM releases WHERE nzbstatus = 1 AND categoryid IN (%s) AND bookinfoid IS NULL) AS processbooks,
 					(SELECT COUNT(*) FROM releases WHERE nzbstatus = 1 AND categoryid = 4050 AND gamesinfo_id = 0) AS processgames,
 					(SELECT COUNT(*) FROM releases WHERE nzbstatus = 1 AND categoryid BETWEEN 6000 AND 6040 AND xxxinfo_id = 0) AS processxxx,
-					(SELECT COUNT(*) FROM releases r WHERE 1=1 %s) AS processnfo", $bookreqids, Nfo::NfoQueryString($this->pdo));
+					(SELECT COUNT(*) FROM releases r WHERE 1=1 %s) AS processnfo", $bookreqids, \Nfo::NfoQueryString($this->pdo));
 			case 2:
 				return "SELECT
 					(SELECT COUNT(*) FROM releases WHERE nzbstatus = 1 AND nfostatus = 1) AS nfo,

@@ -25,6 +25,7 @@ class Category
 	const CAT_MOVIE_3D = 2050;
 	const CAT_MOVIE_BLURAY = 2060;
 	const CAT_MOVIE_DVD = 2070;
+	const CAT_MOVIE_WEBDL = 2080;
 	const CAT_MUSIC_MP3 = 3010;
 	const CAT_MUSIC_VIDEO = 3020;
 	const CAT_MUSIC_AUDIOBOOK = 3030;
@@ -110,7 +111,7 @@ class Category
 			($activeonly ?
 				sprintf(
 					" WHERE c.status = %d %s ",
-					Category::STATUS_ACTIVE,
+					\Category::STATUS_ACTIVE,
 					(count($excludedcats) > 0 ? " AND c.id NOT IN (" . implode(",", $excludedcats) . ")" : '')
 				) : ''
 			) .
@@ -177,7 +178,7 @@ class Category
 	{
 		$act = "";
 		if ($activeonly) {
-			$act = sprintf(" WHERE c.status = %d ", Category::STATUS_ACTIVE);
+			$act = sprintf(" WHERE c.status = %d ", \Category::STATUS_ACTIVE);
 		}
 		return $this->pdo->query("SELECT c.*, (SELECT title FROM category WHERE id=c.parentid) AS parentName FROM category c " . $act . " ORDER BY c.id");
 	}
@@ -293,7 +294,7 @@ class Category
 			$exccatlist = ' AND id NOT IN (' . implode(',', $excludedcats) . ')';
 		}
 
-		$arr = $this->pdo->query(sprintf('SELECT * FROM category WHERE status = %d %s', Category::STATUS_ACTIVE, $exccatlist));
+		$arr = $this->pdo->query(sprintf('SELECT * FROM category WHERE status = %d %s', \Category::STATUS_ACTIVE, $exccatlist));
 		foreach ($arr as $a) {
 			if ($a['parentid'] == '') {
 				$ret[] = $a;

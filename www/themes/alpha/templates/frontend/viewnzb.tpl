@@ -98,11 +98,13 @@
 						<div style="margin-top:10px;">
 							<span class="label label-default">
 								{if $xxx.classused === "ade"}
-								<a target="_blank" href="{$site->dereferrer_link}{$xxx.directurl}/" title="View at Adult DVD Empire">ADE</a>
+								<a target="_blank" href="{$site->dereferrer_link}{$xxx.directurl}" title="View at Adult DVD Empire">ADE</a>
 								{elseif $xxx.classused === "pop"}
 								<a target="_blank" href="{$site->dereferrer_link}{$xxx.directurl}/" title="View at Popporn">Popporn</a>
+								{elseif $xxx.classused === "adm"}
+								<a target="_blank" href="{$site->dereferrer_link}{$xxx.directurl}" title="View at Adult DVD Marketplace">ADM</a>
 								{else}
-								<a target="_blank" href="{$site->dereferrer_link}{$xxx.directurl}/" title="View at Hot Movies">HM</a>
+								<a target="_blank" href="{$site->dereferrer_link}{$xxx.directurl}" title="View at Adult Entertainment Broadcast Network">AEBN</a>
 								{/if}
 							</span>
 							{if $xxx.classused != ''}
@@ -151,14 +153,28 @@
 			{if $game}
 				<tr>
 					<th style="vertical-align:top">PC Game Info:</th>
-					<td><strong>{$game.title|escape:"htmlall"} ({$game.releasedate|date_format:"%Y"})</strong><br>
+					<td><strong>{$game.title|escape:"htmlall"} {if $game.releasedate != ""}({$game.releasedate|date_format:"%Y"}){/if}</strong><br>
 						{if $game.review != ""}<span class="descinitial">{$game.review|escape:"htmlall"|nl2br|magicurl|truncate:"350":" <a class=\"descmore\" href=\"#\">more...</a>"}</span>{if $game.review|strlen > 350}<span class="descfull">{$game.review|escape:"htmlall"|nl2br|magicurl}</span>{/if}<br><br>{/if}
 						{if $game.esrb != ""}<strong>ESRB:</strong> {$game.esrb|escape:"htmlall"}<br>{/if}
 						{if $game.genres != ""}<strong>Genre:</strong> {$game.genres|escape:"htmlall"}<br>{/if}
 						{if $game.publisher != ""}<strong>Publisher:</strong> {$game.publisher|escape:"htmlall"}<br>{/if}
+						{if $game.platform != ""}<strong>Platform:</strong> {$game.platform|escape:"htmlall"}<br />{/if}
 						{if $game.releasedate != ""}<strong>Released:</strong> {$game.releasedate|date_format}{/if}
 						<div style="margin-top:10px;">
-							<span class="label label-default"><a target="_blank" href="{$site->dereferrer_link}{$game.url}" title="View game at Giantbomb">Giantbomb</a></span>
+							<span class="label label-default">
+							{if $game.classused == "gb"}
+								<a target="_blank" href="{$site->dereferrer_link}{$game.url}" title="View game at Giantbomb">Giantbomb</a>
+							{/if}
+							{if $game.classused == "steam"}
+								<a target="_blank" href="{$site->dereferrer_link}{$game.url}" title="View game at Steam">Steam</a>
+							{/if}
+							{if $game.classused == "gl"}
+								<a target="_blank" href="{$site->dereferrer_link}{$game.url}" title="View game at Greenlight">Greenlight</a>
+							{/if}
+							{if $game.classused == "desura"}
+								<a target="_blank" href="{$site->dereferrer_link}{$game.url}" title="View game at Desura">Desura</a>
+							{/if}
+							</span>
 						</div>
 					</td>
 				</tr>
