@@ -90,6 +90,7 @@ python postprocess_threaded.py tv >> $LOG_DIR/update.log 2>&1
 
 cd ${NEWZNAB_PATH}/
 php postprocess.php music true >> $LOG_DIR/update.log 2>&1
+php postprocess.php book true >> $LOG_DIR/update.log 2>&1
 php postprocess.php pre true >> $LOG_DIR/update.log 2>&1
 php postprocess.php sharing true >> $LOG_DIR/update.log 2>&1
 php match_prefiles.php  2000 show >> $LOG_DIR/update.log 2>&1
