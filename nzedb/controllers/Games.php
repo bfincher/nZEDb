@@ -231,7 +231,7 @@ class Games
 				. "con.*, YEAR (con.releasedate) as year, r.gamesinfo_id, groups.name AS group_name,
 				rn.id as nfoid FROM releases r "
 				. "LEFT OUTER JOIN groups ON groups.id = r.group_id "
-				. "LEFT OUTER JOIN releasenfo rn ON rn.releaseid = r.id "
+				. "LEFT OUTER JOIN release_nfos rn ON rn.releaseid = r.id "
 				. "INNER JOIN gamesinfo con ON con.id = r.gamesinfo_id "
 				. "WHERE r.nzbstatus = 1 AND con.title != '' AND "
 				. "r.passwordstatus <= (SELECT value FROM settings WHERE setting='showpasswordedrelease') AND %s %s %s %s "
@@ -550,8 +550,19 @@ class Games
 					}
 
 					if (!empty($this->_gameResults['gamedetails']['Release Date'])) {
-						$date = \DateTime::createFromFormat('M/j/Y', $this->_gameResults['gamedetails']['Release Date']);
-						$con['releasedate'] = (string)$date->format('Y-m-d');
+						$dateReleased = $this->_gameResults['gamedetails']['Release Date'];
+						if (!preg_match('#^\s*(?P<month>\w+)\s+(?P<day>\d{1,2}),?\s+(?P<year>\d{4})\s*$#',
+										$dateReleased)) {
+							if (preg_match('#^\s*(?P<month>\w+)\s+(?P<year>\d{4})\s*$#',
+												$dateReleased, $matches)) {
+								$dateReleased = "{$matches['month']} 1, {$matches['year']}";
+							}
+						}
+
+						$date = \DateTime::createFromFormat('M/j/Y', $dateReleased);
+						if ($date instanceof \DateTime) {
+							$con['releasedate'] = (string)$date->format('Y-m-d');
+						}
 					}
 
 					if (isset($this->_gameResults['description'])) {
