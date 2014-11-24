@@ -65,7 +65,7 @@
 				{html_radios id="running" name='running' values=$yesno_ids output=$yesno_names selected=$ftmux->running separator='<br />'}
 				<div class="hint">This is the shutdown, true/on, it runs, false/off and all scripts are terminated. This
 					will start/stop all panes without terminating the monitor pane. This is not instant, it does not
-					kill any panes, it simply does not aloow any pane to restart if set to false.
+					kill any panes, it simply does not allow any pane to restart if set to false.
 				</div>
 			</td>
 		</tr>
@@ -464,7 +464,7 @@
 						{html_checkboxes id="fix_crap" name='fix_crap' disabled="true" readonly="true" values=$fix_crap_check_ids output=$fix_crap_check_names selected=explode(', ', $ftmux->fix_crap)}
 					{/if}
 				</div>
-				<div class="hint">Choose to run Remove Crap Releases. You can all or some.</div>
+				<div class="hint">Choose to run Remove Crap Releases. You can enable all or some.</div>
 			</td>
 		</tr>
 		<tr>
