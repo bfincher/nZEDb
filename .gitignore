@@ -21,3 +21,4 @@ test.php
 nzbfiles
 /templates_c/*
 /vendor
+www/settings.php.bak
