@@ -9,10 +9,12 @@ echo "Deleting ".count($rel)." orphaned bookinfo entries\n";
 foreach ($rel as $r) { 
 #	echo var_dump($r);
         echo $r['id']."\n";
+#        $query = sprintf("delete from bookinfo where ID = %d", $r['id']);
+#        echo "query = ".$query."\n";
+	$pdo->queryExec(sprintf("delete from bookinfo where ID = %d", $r['id']));
 	$file = "../../www/covers/book/".$r['id'].".jpg";
 	unlink($file);
 
-	$pdo->queryExec(sprintf("delete from musicinfo where ID = %d", $r['id']));
 }
 
 ?>
