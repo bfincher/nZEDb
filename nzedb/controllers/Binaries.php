@@ -318,12 +318,15 @@ class Binaries
 			$totalCount = (string)($groupNNTP['last'] - $first);
 
 			// Check if the server has more articles than our loop limit x 2.
+
 			if ($totalCount > ($this->messageBuffer * 2)) {
 				// Get the remainder of $totalCount / $this->message buffer
-				$leaveOver = round(($totalCount % $this->messageBuffer), 0, PHP_ROUND_HALF_DOWN) + $this->messageBuffer;
+				$leaveOver = round(($this->messageBuffer / 2), 0, PHP_ROUND_HALF_DOWN);
+				//$leaveOver = round(($totalCount % $this->messageBuffer), 0, PHP_ROUND_HALF_DOWN) + $this->messageBuffer;
 			} else {
 				// Else get half of the available.
-				$leaveOver = round(($totalCount / 2), 0, PHP_ROUND_HALF_DOWN);
+				//$leaveOver = 0;
+				$leaveOver = min(10000, round(($totalCount / 2), 0, PHP_ROUND_HALF_DOWN));
 			}
 		}
 
