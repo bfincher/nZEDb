@@ -67,7 +67,7 @@ echo $count
 #php nzb-import.php /data_local/nzbimport true true false 1000 >> $BIN_LOG 2>&1
 
 cd ${NEWZNAB_PATH}
-#php backfill.php safe 100000 >> $LOG_DIR/backfill.log
+##php backfill.php safe 100000  >> $LOG_DIR/backfill.log
 php ${NEWZNAB_BINUP} >> $BIN_LOG 2>&1
 date >> $BIN_LOG
 php ${NEWZNAB_RELUP} >> $REL_LOG 2>&1
