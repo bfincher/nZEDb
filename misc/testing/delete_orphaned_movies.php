@@ -9,10 +9,16 @@ echo "Deleting ".count($rel)." orphaned movieinfo entries\n";
 foreach ($rel as $r) { 
 #	echo var_dump($r);
         echo $r['id']."\n";
-##	$file = "../../www/covers/music/".$r['id'].".jpg";
-##	unlink($file);
+	$file = "../../www/covers/movies/".$r['id']."-backdrop.jpg";
+        if (file_exists($file)) {
+		unlink($file);
+	}
+	$file = "../../www/covers/movies/".$r['id']."-cover.jpg";
+        if (file_exists($file)) {
+		unlink($file);
+	}
 
-##	$pdo->queryExec(sprintf("delete from musicinfo where ID = %d", $r['id']));
+	$pdo->queryExec(sprintf("delete from movieinfo where imdbid = %d", $r['id']));
 }
 
 ?>
