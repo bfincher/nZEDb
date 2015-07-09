@@ -67,7 +67,7 @@ echo $count
 #php nzb-import.php /data_local/nzbimport true true false 1000 >> $BIN_LOG 2>&1
 
 cd ${NEWZNAB_PATH}
-##php backfill.php safe 100000  >> $LOG_DIR/backfill.log
+##php backfill.php alt.binaries.town 1000000  >> $LOG_DIR/backfill.log
 php ${NEWZNAB_BINUP} >> $BIN_LOG 2>&1
 date >> $BIN_LOG
 php ${NEWZNAB_RELUP} >> $REL_LOG 2>&1
@@ -75,8 +75,14 @@ date >> $REL_LOG
 php decrypt_hashes.php 2000 >> $LOG_DIR/update.log 2>&1
 
 cd ${TESTING_PATH}/Release
-php removeCrapReleases.php true 6 >> $LOG_DIR/update.log 2>&1
-php delete_disabled_category_releases.php true >> $LOG_DIR/update.log 2>&1
+php removeCrapReleases.php true 6 blacklist >> $LOG_DIR/update.log 2>&1
+php removeCrapReleases.php true 6 blfiles >> $LOG_DIR/update.log 2>&1
+php removeCrapReleases.php true 6 codec >> $LOG_DIR/update.log 2>&1
+php removeCrapReleases.php true 6 executable >> $LOG_DIR/update.log 2>&1
+php removeCrapReleases.php true 6 gibberish >> $LOG_DIR/update.log 2>&1
+php removeCrapReleases.php true 6 installbin >> $LOG_DIR/update.log 2>&1
+php removeCrapReleases.php true 6 short >> $LOG_DIR/update.log 2>&1
+#php delete_disabled_category_releases.php true >> $LOG_DIR/update.log 2>&1
 
 
 #cd ${NEWZNAB_PATH}/threaded_scripts
@@ -93,13 +99,15 @@ php postprocess.php music true >> $LOG_DIR/update.log 2>&1
 php postprocess.php book true >> $LOG_DIR/update.log 2>&1
 php postprocess.php pre true >> $LOG_DIR/update.log 2>&1
 php postprocess.php sharing true >> $LOG_DIR/update.log 2>&1
-php match_prefiles.php  2000 show >> $LOG_DIR/update.log 2>&1
+php match_prefiles.php  10000 show >> $LOG_DIR/update.log 2>&1
+php requestid.php 10000 true >> $LOG_DIR/update.log 2>&1
+php predbftmatch.php 10000 show >> $LOG_DIR/update.log 2>&1
 
 
 cd ${TESTING_PATH}/Release
 php fixReleaseNames.php 3 true all yes >> $LOG_DIR/update.log 2>&1
 php fixReleaseNames.php 1 true all yes >> $LOG_DIR/update.log 2>&1
-php fixReleaseNames.php 7 true other yes >> $LOG_DIR/update.log 2>&1
+php fixReleaseNames.php 7 true all yes >> $LOG_DIR/update.log 2>&1
 
 #cd ${NEWZNAB_PATH}/python
 #python fixreleasenames_threaded.py par2 >> $LOG_DIR/update.log 2>&1
