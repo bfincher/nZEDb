@@ -7,7 +7,13 @@ New updates are grouped by person (committer/merger), at the top of the file.
 All entries are dated according to merging into the code in dev branch.
 For details of when a commit makes it into the master branch see the ReleaseNotes file.
 
-
+2015-07-09 niel
+	* Fix: Installation requires problems. No, really this time, I even tested it on a VM.
+2015-07-08 niel
+	* Fix: Path of require for installation's config. Plus additional requires in step files.
+	* Mrg: PR 1753, from Fossil01 - Show password on screen after reset.
+2015-07-07 niel
+	* Fix: Require of 'config.php' for installing.
 2015-07-06 niel
 	* Mrg: PR 1747, from sebst3r - API-Change regarding JSON-Output
 2015-06-30 niel
