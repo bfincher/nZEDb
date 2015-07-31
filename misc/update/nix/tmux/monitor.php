@@ -322,7 +322,9 @@ while ($runVar['counts']['iterations'] > 0) {
 		? true
 		: false
 	);
-	$runVar['killswitch']['coll'] = (($runVar['settings']['collections_kill'] < $runVar['counts']['now']['collections_table']) && ($runVar['settings']['collections_kill'] != 0)
+	$runVar['killswitch']['coll'] = (
+                (($runVar['settings']['parts_kill'] < $runVar['counts']['now']['parts_table']) && ($runVar['settings']['parts_kill'] != 0))
+                || (($runVar['settings']['collections_kill'] < $runVar['counts']['now']['collections_table']) && ($runVar['settings']['collections_kill'] != 0))
 		? true
 		: false
 	);

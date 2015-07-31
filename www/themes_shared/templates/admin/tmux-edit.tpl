@@ -582,6 +582,16 @@
 			</td>
 		</tr>
 		<tr>
+			<td style="width:180px;"><label for="parts_kill">Maximum Parts:</label></td>
+			<td>
+				<input id="parts_kill" name="parts_kill" class="short" type="text"
+					value="{$ftmux->parts_kill}"/>
+				<div class="hint">Set this to any number above 0 and when it is exceeded, backfill and update binaries
+					will be terminated. 0 disables.
+				</div>
+			</td>
+		</tr>
+		<tr>
 			<td style="width:180px;"><label for="postprocess_kill">Maximum Postprocess:</label></td>
 			<td>
 				<input id="postprocess_kill" name="postprocess_kill" class="short" type="text"

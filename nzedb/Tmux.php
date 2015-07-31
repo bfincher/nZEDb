@@ -215,6 +215,7 @@ class Tmux
 					(%1\$s 'fix_timer') AS fix_timer,
 					(%1\$s 'post_timer') AS post_timer,
 					(%1\$s 'collections_kill') AS collections_kill,
+					(%1\$s 'parts_kill') AS parts_kill,
 					(%1\$s 'postprocess_kill') AS postprocess_kill,
 					(%1\$s 'crap_timer') AS crap_timer,
 					(%1\$s 'fix_crap') AS fix_crap,

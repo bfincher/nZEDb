@@ -24,6 +24,7 @@ post_timer	30
 import_bulk	0
 backfill_qty	100000
 collections_kill	0
+parts_kill	0
 postprocess_kill	0
 crap_timer	30
 fix_crap	0
