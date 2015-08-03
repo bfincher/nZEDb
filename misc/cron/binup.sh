@@ -105,9 +105,9 @@ php predbftmatch.php 10000 show >> $LOG_DIR/update.log 2>&1
 
 
 cd ${TESTING_PATH}/Release
-php fixReleaseNames.php 3 true all yes >> $LOG_DIR/update.log 2>&1
-php fixReleaseNames.php 1 true all yes >> $LOG_DIR/update.log 2>&1
-php fixReleaseNames.php 7 true all yes >> $LOG_DIR/update.log 2>&1
+php fixReleaseNames.php 1 true all yes show >> $LOG_DIR/update.log 2>&1
+php fixReleaseNames.php 3 true all yes show >> $LOG_DIR/update.log 2>&1
+php fixReleaseNames.php 7 true all yes show >> $LOG_DIR/update.log 2>&1
 
 #cd ${NEWZNAB_PATH}/python
 #python fixreleasenames_threaded.py par2 >> $LOG_DIR/update.log 2>&1
