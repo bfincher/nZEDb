@@ -9,11 +9,11 @@ echo "Deleting ".count($rel)." orphaned movieinfo entries\n";
 foreach ($rel as $r) { 
 #	echo var_dump($r);
         echo $r['id']."\n";
-	$file = "../../www/covers/movies/".$r['id']."-backdrop.jpg";
+	$file = "../../resources/covers/movies/".$r['id']."-backdrop.jpg";
         if (file_exists($file)) {
 		unlink($file);
 	}
-	$file = "../../www/covers/movies/".$r['id']."-cover.jpg";
+	$file = "../../resources/covers/movies/".$r['id']."-cover.jpg";
         if (file_exists($file)) {
 		unlink($file);
 	}

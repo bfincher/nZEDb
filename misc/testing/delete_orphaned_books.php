@@ -12,7 +12,7 @@ foreach ($rel as $r) {
 #        $query = sprintf("delete from bookinfo where ID = %d", $r['id']);
 #        echo "query = ".$query."\n";
 	$pdo->queryExec(sprintf("delete from bookinfo where ID = %d", $r['id']));
-	$file = "../../www/covers/book/".$r['id'].".jpg";
+	$file = "../../resources/covers/book/".$r['id'].".jpg";
 	unlink($file);
 
 }

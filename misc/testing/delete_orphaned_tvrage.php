@@ -9,7 +9,7 @@ $rel = $pdo->query($sql);
 foreach ($rel as $r) { 
 #	echo var_dump($r);
         echo $r['id']."\n";
-#	$file = "../../www/covers/music/".$r['id'].".jpg";
+#	$file = "../../resources/covers/music/".$r['id'].".jpg";
 #	unlink($file);
 
 	$pdo->queryExec(sprintf("delete from tvrage where ID = %d", $r['id']));
