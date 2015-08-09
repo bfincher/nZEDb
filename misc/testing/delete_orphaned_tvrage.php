@@ -1,6 +1,6 @@
 <?php
 define('FS_ROOT', realpath(dirname(__FILE__)));
-require_once(FS_ROOT."/../../www/config.php");
+require_once realpath(dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . 'indexer.php');
 
 $pdo = new nzedb\db\Settings();
 $sql = "select rage.ID from tvrage rage left join releases r on rage.ID = r.rageID where r.rageID is null;";
