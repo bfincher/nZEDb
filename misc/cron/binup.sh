@@ -109,6 +109,8 @@ php fixReleaseNames.php 1 true all yes show >> $LOG_DIR/update.log 2>&1
 php fixReleaseNames.php 3 true all yes show >> $LOG_DIR/update.log 2>&1
 php fixReleaseNames.php 7 true all yes show >> $LOG_DIR/update.log 2>&1
 
+correct_release_names.py >> $LOG_DIR/update.log 2>&1
+
 #cd ${NEWZNAB_PATH}/python
 #python fixreleasenames_threaded.py par2 >> $LOG_DIR/update.log 2>&1
 #cd ${TESTING_PATH}
