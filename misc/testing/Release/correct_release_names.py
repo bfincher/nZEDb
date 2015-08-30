@@ -3,14 +3,25 @@ import os
 import re
 import cymysql as mdb
 import sets
+import sys
 
-print __name__
-
-#nzbFileRegex = re.compile(r'^([0-9]|[a-f])+\.nzb\.gz$')
-
-#Release Name: Big.Brother
-
+def printUsage():
+    print "Usage:  correct_release_names.py [full | NUM_HOURS]"
 def main():
+
+    if len(sys.argv) != 2:
+        printUsage()
+        return
+
+    if re.search(r'(full)|\d+$', sys.argv[1]) is None:
+        printUsage()
+	return
+
+    if sys.argv[1] == 'full':
+        where = ''
+    else:
+        where = 'AND adddate > NOW() - INTERVAL %s HOUR' % sys.argv[1]
+
     with open ("../../../nzedb/config/config.php", "r") as confFile:
         config = confFile.read().replace('\n', '')
     m = re.search(r"define\('DB_NAME'\W*,\W*'(\w+)", config)
@@ -35,7 +46,14 @@ def main():
     ('[color=%', r'^\[color=\w+\]'),
     ]
     for toFix in toFixList:
-        cur.execute("select id, searchname from releases where searchname like '%s'" % (toFix[0]));
+        query = "select id, searchname from releases where searchname like '%s' %s" % (toFix[0], where)
+        print 'query = %s' % query
+        r = cur.execute(query)
+        if r:
+            numRows = cur.rowcount
+        else:
+            numRows = 0
+        print "corrected %d rows" % numRows
         fetchsize = 1000
         results = cur.fetchmany(fetchsize);
         while results:

@@ -91,6 +91,15 @@ php removeCrapReleases.php true 6 short >> $LOG_DIR/update.log 2>&1
 cd ${NEWZNAB_PATH}/python
 nice python postprocess_threaded.py additional >> $LOG_DIR/update.log 2>&1
 python postprocess_threaded.py nfo >> $LOG_DIR/update.log 2>&1
+
+cd ${TESTING_PATH}/Release
+php fixReleaseNames.php 1 true all yes show >> $LOG_DIR/update.log 2>&1
+php fixReleaseNames.php 3 true all yes show >> $LOG_DIR/update.log 2>&1
+php fixReleaseNames.php 7 true all yes show >> $LOG_DIR/update.log 2>&1
+php fixReleaseNames.php 5 true all yes show >> $LOG_DIR/update.log 2>&1
+#python correct_release_names.py 6 >> $LOG_DIR/update.log 2>&1
+
+cd ${NEWZNAB_PATH}/python
 python postprocess_threaded.py movie >> $LOG_DIR/update.log 2>&1
 python postprocess_threaded.py tv >> $LOG_DIR/update.log 2>&1
 
@@ -102,14 +111,6 @@ php postprocess.php sharing true >> $LOG_DIR/update.log 2>&1
 php match_prefiles.php  10000 show >> $LOG_DIR/update.log 2>&1
 php requestid.php 10000 true >> $LOG_DIR/update.log 2>&1
 php predbftmatch.php 10000 show >> $LOG_DIR/update.log 2>&1
-
-
-cd ${TESTING_PATH}/Release
-php fixReleaseNames.php 1 true all yes show >> $LOG_DIR/update.log 2>&1
-php fixReleaseNames.php 3 true all yes show >> $LOG_DIR/update.log 2>&1
-php fixReleaseNames.php 7 true all yes show >> $LOG_DIR/update.log 2>&1
-
-correct_release_names.py >> $LOG_DIR/update.log 2>&1
 
 #cd ${NEWZNAB_PATH}/python
 #python fixreleasenames_threaded.py par2 >> $LOG_DIR/update.log 2>&1
